@@ -1,0 +1,37 @@
+{
+  "arduino_com": "COM9",
+  "arduino_baud": 9600,
+  "default_cam_index": 1,
+  "espera_post_ms": 1600,
+  "flash_led_count": 2,
+  "flash_duration_ms": 1000,
+  "species_color_1": "#CC0000",
+  "species_color_2": "#00CC00",
+  "species_color_3": "#CCCC00",
+  "species_color_4": "#CC00CC",
+  "food_color_tone_range": 0.35,
+  "fondo_files": [
+    "arrecife photo.png",
+    "arrecife.png",
+    "mar.png",
+    "rio.png"
+  ],
+  "species_profiles": [
+    {
+      "sound1": "splash.wav",
+      "sound2": "hai-hai.mp3"
+    },
+    {
+      "sound1": "splash.wav",
+      "sound2": "yahoo.wav"
+    },
+    {
+      "sound1": "splash.wav",
+      "sound2": "caballito.mp3"
+    },
+    {
+      "sound1": "splash.wav",
+      "sound2": "shark.mp3"
+    }
+  ]
+}
