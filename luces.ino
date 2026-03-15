@@ -69,6 +69,9 @@ unsigned long flashDurationMs = 1000;
 int idleLedCount = 16;
 String serialLine = "";
 
+int matrixCenterOrder[NUM_LEDS_2];
+bool matrixCenterOrderReady = false;
+
 // =========================
 // Animación NeoPixel no bloqueante (tira 60 LEDs en PIN_NEOPIXEL)
 // =========================
@@ -116,6 +119,8 @@ void setup() {
   pixels2.begin();
   pixels2.clear();
   pixels2.show();
+
+  prepareMatrixCenterOrder();
 
   updateIdleLeds();
 }
@@ -228,12 +233,8 @@ void updateCaptureSequence() {
 // Matriz 2, centro en blanco
 // Nota: tu código actual enciende un 6x6 central (filas 1..6, cols 1..6)
 // =========================
-void matriz2FlashOn(int ledCount) {
-  pixels2.clear();
-
-  int cappedCount = ledCount;
-  if (cappedCount < 1) cappedCount = 1;
-  if (cappedCount > NUM_LEDS_2) cappedCount = NUM_LEDS_2;
+void prepareMatrixCenterOrder() {
+  if (matrixCenterOrderReady) return;
 
   int orderedIdx[NUM_LEDS_2];
   float orderedDist[NUM_LEDS_2];
@@ -265,20 +266,46 @@ void matriz2FlashOn(int ledCount) {
     }
   }
 
-  uint32_t blanco = pixels2.Color(255, 255, 255);
+  for (int i = 0; i < n; i++) {
+    matrixCenterOrder[i] = orderedIdx[i];
+  }
+
+  matrixCenterOrderReady = true;
+}
+
+void paintMatrixCenter(int ledCount, uint32_t color) {
+  int cappedCount = ledCount;
+  if (cappedCount < 1) cappedCount = 1;
+  if (cappedCount > NUM_LEDS_2) cappedCount = NUM_LEDS_2;
 
   for (int i = 0; i < cappedCount; i++) {
-    int idx = orderedIdx[i];
-    if (idx >= 0 && idx < NUM_LEDS_2) {
-      pixels2.setPixelColor(idx, blanco);
-    }
+    int idx = matrixCenterOrder[i];
+    if (idx >= 0 && idx < NUM_LEDS_2) pixels2.setPixelColor(idx, color);
   }
+}
+
+void matriz2FlashOn(int ledCount) {
+  pixels2.clear();
+
+  uint32_t idleColor = pixels2.Color(0, 40, 70);
+  uint32_t flashColor = pixels2.Color(255, 255, 255);
+
+  // Base idle siempre encendida
+  paintMatrixCenter(idleLedCount, idleColor);
+
+  // Flash encima del patrón idle
+  paintMatrixCenter(ledCount, flashColor);
 
   pixels2.show();
 }
 
 void updateIdleMatrix() {
-  matriz2FlashOn(idleLedCount);
+  pixels2.clear();
+
+  uint32_t idleColor = pixels2.Color(0, 40, 70);
+  paintMatrixCenter(idleLedCount, idleColor);
+
+  pixels2.show();
 }
 
 void updateIdleStrip() {
