@@ -6,6 +6,10 @@ import processing.serial.*;
 int lastAnimalsPrinted = -1;
 int[] lastFoodPrinted = null;
 
+boolean arduinoBootSyncPending = false;
+int arduinoBootSyncAtMs = 0;
+final int ARDUINO_BOOT_SYNC_DELAY_MS = 2200;
+
 String cfgArduinoCom;
 int cfgArduinoBaud;
 int cfgDefaultCamIndex;
@@ -366,6 +370,10 @@ void setup() {
     arduino.clear();
     arduino.buffer(1);
     sendFlashConfigToArduino();
+    // Al abrir el puerto serial, muchos Arduino se reinician y pueden perder
+    // esta primera configuración. Se programa un reenvío tras el bootloader.
+    arduinoBootSyncPending = true;
+    arduinoBootSyncAtMs = millis() + ARDUINO_BOOT_SYNC_DELAY_MS;
   }
   catch (Exception e) {
     arduino = null;
@@ -413,6 +421,12 @@ void sendFlashConfigToArduino() {
 }
 
 void draw() {
+  if (arduinoBootSyncPending && millis() >= arduinoBootSyncAtMs) {
+    sendFlashConfigToArduino();
+    arduinoBootSyncPending = false;
+    println("Reenvío de config LED al Arduino tras reinicio de puerto serial");
+  }
+
   // Fondo
   assets.drawBackgroundCover(width, height);
 
