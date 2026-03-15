@@ -133,12 +133,6 @@ void loop() {
       continue;
     }
 
-    // Compatibilidad con tu Processing actual
-    if (comando == '1') {
-      triggerAnimOnly = true;
-      continue;
-    }
-
     serialLine += comando;
     if (serialLine.length() > 32) serialLine = "";
   }
@@ -290,6 +284,12 @@ void updateIdleMatrix() {
 void parseSerialLine(String line) {
   line.trim();
   if (line.length() == 0) return;
+
+  // Compatibilidad con Processing legado: comando directo "1" para animación
+  if (line == "1") {
+    triggerAnimOnly = true;
+    return;
+  }
 
   if (line.startsWith("F:")) {
     int sep = line.indexOf(',');
