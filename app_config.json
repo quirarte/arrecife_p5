@@ -33,5 +33,6 @@
       "sound1": "splash.wav",
       "sound2": "shark.mp3"
     }
-  ]
+  ],
+  "idle_led_count": 16
 }
