@@ -69,8 +69,8 @@ unsigned long flashDurationMs = 1000;
 int idleLedCount = 16;
 String serialLine = "";
 
-int matrixCenterOrder[NUM_LEDS_2];
-bool matrixCenterOrderReady = false;
+int matrixCornersOrder[NUM_LEDS_2];
+bool matrixCornersOrderReady = false;
 
 // =========================
 // Animación NeoPixel no bloqueante (tira 60 LEDs en PIN_NEOPIXEL)
@@ -120,7 +120,7 @@ void setup() {
   pixels2.clear();
   pixels2.show();
 
-  prepareMatrixCenterOrder();
+  prepareMatrixCornersOrder();
 
   updateIdleLeds();
 }
@@ -230,56 +230,54 @@ void updateCaptureSequence() {
 }
 
 // =========================
-// Matriz 2, centro en blanco
-// Nota: tu código actual enciende un 6x6 central (filas 1..6, cols 1..6)
+// Matriz 2: patrón por esquinas hacia adentro
 // =========================
-void prepareMatrixCenterOrder() {
-  if (matrixCenterOrderReady) return;
+void prepareMatrixCornersOrder() {
+  if (matrixCornersOrderReady) return;
 
-  int orderedIdx[NUM_LEDS_2];
-  float orderedDist[NUM_LEDS_2];
   int n = 0;
+  for (int layer = 0; layer < 4; layer++) {
+    int top = layer;
+    int left = layer;
+    int bottom = 7 - layer;
+    int right = 7 - layer;
 
+    // Prioridad: esquina 1, 3, 2, 4
+    matrixCornersOrder[n++] = indexXY2(top, left);      // esquina 1 (arriba-izquierda)
+    matrixCornersOrder[n++] = indexXY2(bottom, right);  // esquina 3 (abajo-derecha)
+    matrixCornersOrder[n++] = indexXY2(top, right);     // esquina 2 (arriba-derecha)
+    matrixCornersOrder[n++] = indexXY2(bottom, left);   // esquina 4 (abajo-izquierda)
+  }
+
+  // Completar con cualquier LED faltante para cubrir los 64 índices.
   for (int fila = 0; fila < 8; fila++) {
     for (int col = 0; col < 8; col++) {
-      float dx = col - 3.5;
-      float dy = fila - 3.5;
-      orderedIdx[n] = indexXY2(fila, col);
-      orderedDist[n] = dx * dx + dy * dy;
-      n++;
+      int idx = indexXY2(fila, col);
+      bool exists = false;
+
+      for (int i = 0; i < n; i++) {
+        if (matrixCornersOrder[i] == idx) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (!exists && n < NUM_LEDS_2) {
+        matrixCornersOrder[n++] = idx;
+      }
     }
   }
 
-  for (int i = 0; i < n - 1; i++) {
-    int best = i;
-    for (int j = i + 1; j < n; j++) {
-      if (orderedDist[j] < orderedDist[best]) best = j;
-    }
-    if (best != i) {
-      float tmpDist = orderedDist[i];
-      orderedDist[i] = orderedDist[best];
-      orderedDist[best] = tmpDist;
-
-      int tmpIdx = orderedIdx[i];
-      orderedIdx[i] = orderedIdx[best];
-      orderedIdx[best] = tmpIdx;
-    }
-  }
-
-  for (int i = 0; i < n; i++) {
-    matrixCenterOrder[i] = orderedIdx[i];
-  }
-
-  matrixCenterOrderReady = true;
+  matrixCornersOrderReady = true;
 }
 
-void paintMatrixCenter(int ledCount, uint32_t color) {
+void paintMatrixCorners(int ledCount, uint32_t color) {
   int cappedCount = ledCount;
   if (cappedCount < 1) cappedCount = 1;
   if (cappedCount > NUM_LEDS_2) cappedCount = NUM_LEDS_2;
 
   for (int i = 0; i < cappedCount; i++) {
-    int idx = matrixCenterOrder[i];
+    int idx = matrixCornersOrder[i];
     if (idx >= 0 && idx < NUM_LEDS_2) pixels2.setPixelColor(idx, color);
   }
 }
@@ -291,10 +289,10 @@ void matriz2FlashOn(int ledCount) {
   uint32_t flashColor = pixels2.Color(255, 255, 255);
 
   // Base idle siempre encendida
-  paintMatrixCenter(idleLedCount, idleColor);
+  paintMatrixCorners(idleLedCount, idleColor);
 
   // Flash encima del patrón idle
-  paintMatrixCenter(ledCount, flashColor);
+  paintMatrixCorners(ledCount, flashColor);
 
   pixels2.show();
 }
@@ -303,7 +301,7 @@ void updateIdleMatrix() {
   pixels2.clear();
 
   uint32_t idleColor = pixels2.Color(0, 40, 70);
-  paintMatrixCenter(idleLedCount, idleColor);
+  paintMatrixCorners(idleLedCount, idleColor);
 
   pixels2.show();
 }
