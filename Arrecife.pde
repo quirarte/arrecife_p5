@@ -12,6 +12,7 @@ int cfgDefaultCamIndex;
 int cfgEsperaPostMs;
 int cfgFlashLedCount;
 int cfgFlashDurationMs;
+int cfgIdleLedCount;
 int[] cfgSpeciesFoodColors;
 boolean[] cfgSpeciesFoodColorSet;
 float cfgFoodColorToneRange;
@@ -67,6 +68,9 @@ void loadRuntimeConfig() {
   cfgEsperaPostMs = 1600;
   cfgFlashLedCount = 16;
   cfgFlashDurationMs = 1000;
+  // Fallback: solo se usa si app_config.json no trae idle_led_count
+  // (normalmente lo cambias únicamente en el JSON).
+  cfgIdleLedCount = cfgFlashLedCount;
   cfgFoodColorToneRange = 0.20;
   cfgSpeciesFoodColors = new int[CFG.MAX_SPECIES_KEYS];
   cfgSpeciesFoodColorSet = new boolean[CFG.MAX_SPECIES_KEYS];
@@ -86,8 +90,10 @@ void loadRuntimeConfig() {
   cfgEsperaPostMs = runtimeCfg.getInt("espera_post_ms", cfgEsperaPostMs);
   cfgFlashLedCount = runtimeCfg.getInt("flash_led_count", cfgFlashLedCount);
   cfgFlashDurationMs = runtimeCfg.getInt("flash_duration_ms", cfgFlashDurationMs);
+  cfgIdleLedCount = runtimeCfg.getInt("idle_led_count", cfgIdleLedCount);
   cfgFlashLedCount = constrain(cfgFlashLedCount, 1, 64);
   cfgFlashDurationMs = max(1, cfgFlashDurationMs);
+  cfgIdleLedCount = constrain(cfgIdleLedCount, 1, 64);
   cfgFoodColorToneRange = runtimeCfg.getFloat("food_color_tone_range", cfgFoodColorToneRange);
   cfgFoodColorToneRange = constrain(cfgFoodColorToneRange, 0.0, 1.0);
 
@@ -156,6 +162,7 @@ void loadRuntimeConfig() {
     + " espera_post_ms=" + cfgEsperaPostMs
     + " flash_led_count=" + cfgFlashLedCount
     + " flash_duration_ms=" + cfgFlashDurationMs
+    + " idle_led_count=" + cfgIdleLedCount
     + " food_color_tone_range=" + nf(cfgFoodColorToneRange, 1, 3)
     + " species_profiles=" + ((cfgSpeciesSoundPairs == null) ? 0 : cfgSpeciesSoundPairs.length)
     + " fondo_files=" + ((cfgFondoFiles == null) ? 0 : cfgFondoFiles.length));
@@ -402,6 +409,7 @@ void setup() {
 void sendFlashConfigToArduino() {
   if (!arduinoDisponible || arduino == null) return;
   arduino.write("F:" + cfgFlashLedCount + "," + cfgFlashDurationMs + "\n");
+  arduino.write("I:" + cfgIdleLedCount + "\n");
 }
 
 void draw() {

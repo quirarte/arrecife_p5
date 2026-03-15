@@ -66,6 +66,7 @@ bool sentS = false;
 
 int flashLedCount = 16;
 unsigned long flashDurationMs = 1000;
+int idleLedCount = 16;
 String serialLine = "";
 
 // =========================
@@ -115,6 +116,8 @@ void setup() {
   pixels2.begin();
   pixels2.clear();
   pixels2.show();
+
+  updateIdleMatrix();
 }
 
 void loop() {
@@ -210,9 +213,8 @@ void updateCaptureSequence() {
   }
   else if (capState == CAP_WAIT_AFTER_S) {
     if (now - capT0 >= 200) {
-      // Apaga matriz 2
-      pixels2.clear();
-      pixels2.show();
+      // Regresa matriz 2 al patrón idle
+      updateIdleMatrix();
 
       // Arranca animación en tira (pin 12)
       startAnim();
@@ -281,6 +283,10 @@ void matriz2FlashOn(int ledCount) {
   pixels2.show();
 }
 
+void updateIdleMatrix() {
+  matriz2FlashOn(idleLedCount);
+}
+
 void parseSerialLine(String line) {
   line.trim();
   if (line.length() == 0) return;
@@ -297,8 +303,18 @@ void parseSerialLine(String line) {
 
     if (leds >= 1 && leds <= NUM_LEDS_2) flashLedCount = leds;
     if (duration >= 1) flashDurationMs = (unsigned long)duration;
+    return;
+  }
+
+  if (line.startsWith("I:")) {
+    int leds = line.substring(2).toInt();
+    if (leds >= 1 && leds <= NUM_LEDS_2) {
+      idleLedCount = leds;
+      if (capState == CAP_IDLE) updateIdleMatrix();
+    }
   }
 }
+
 
 // =========================
 // Animación NeoPixel no bloqueante (tira 60 LEDs)
