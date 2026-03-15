@@ -117,7 +117,7 @@ void setup() {
   pixels2.clear();
   pixels2.show();
 
-  updateIdleMatrix();
+  updateIdleLeds();
 }
 
 void loop() {
@@ -207,8 +207,8 @@ void updateCaptureSequence() {
   }
   else if (capState == CAP_WAIT_AFTER_S) {
     if (now - capT0 >= 200) {
-      // Regresa matriz 2 al patrón idle
-      updateIdleMatrix();
+      // Regresa ambos NeoPixel al patrón idle
+      updateIdleLeds();
 
       // Arranca animación en tira (pin 12)
       startAnim();
@@ -281,6 +281,29 @@ void updateIdleMatrix() {
   matriz2FlashOn(idleLedCount);
 }
 
+void updateIdleStrip() {
+  pixels.clear();
+
+  int cappedCount = idleLedCount;
+  if (cappedCount < 1) cappedCount = 1;
+  if (cappedCount > NUM_LEDS) cappedCount = NUM_LEDS;
+
+  int start = (NUM_LEDS - cappedCount) / 2;
+  int end = start + cappedCount;
+  uint32_t idleColor = pixels.Color(0, 50, 90);
+
+  for (int i = start; i < end; i++) {
+    pixels.setPixelColor(i, idleColor);
+  }
+
+  pixels.show();
+}
+
+void updateIdleLeds() {
+  updateIdleMatrix();
+  updateIdleStrip();
+}
+
 void parseSerialLine(String line) {
   line.trim();
   if (line.length() == 0) return;
@@ -310,7 +333,7 @@ void parseSerialLine(String line) {
     int leds = line.substring(2).toInt();
     if (leds >= 1 && leds <= NUM_LEDS_2) {
       idleLedCount = leds;
-      if (capState == CAP_IDLE) updateIdleMatrix();
+      if (capState == CAP_IDLE && !animRunning) updateIdleLeds();
     }
   }
 }
@@ -341,9 +364,8 @@ void updateAnim() {
 
   // Cuando la cabeza ya salió y la cola también, termina
   if (animHead >= NUM_LEDS + TRAVEL_LEN) {
-    pixels.clear();
-    pixels.show();
     animRunning = false;
+    updateIdleStrip();
     return;
   }
 
