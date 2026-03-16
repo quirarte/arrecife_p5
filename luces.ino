@@ -66,7 +66,7 @@ bool sentS = false;
 
 int flashLedCount = 16;
 unsigned long flashDurationMs = 1000;
-int idleLedCount = 16;
+int idleLedCount = 2;
 String serialLine = "";
 
 int matrixCornersOrder[NUM_LEDS_2];
@@ -285,7 +285,7 @@ void paintMatrixCorners(int ledCount, uint32_t color) {
 void matriz2FlashOn(int ledCount) {
   pixels2.clear();
 
-  uint32_t idleColor = pixels2.Color(0, 40, 70);
+  uint32_t idleColor = pixels2.Color(255, 255, 255);
   uint32_t flashColor = pixels2.Color(255, 255, 255);
 
   // Base idle siempre encendida
@@ -300,27 +300,15 @@ void matriz2FlashOn(int ledCount) {
 void updateIdleMatrix() {
   pixels2.clear();
 
-  uint32_t idleColor = pixels2.Color(0, 40, 70);
+  uint32_t idleColor = pixels2.Color(255, 255, 255);
   paintMatrixCorners(idleLedCount, idleColor);
 
   pixels2.show();
 }
 
 void updateIdleStrip() {
+  // La tira principal debe permanecer apagada en reposo.
   pixels.clear();
-
-  int cappedCount = idleLedCount;
-  if (cappedCount < 1) cappedCount = 1;
-  if (cappedCount > NUM_LEDS) cappedCount = NUM_LEDS;
-
-  int start = (NUM_LEDS - cappedCount) / 2;
-  int end = start + cappedCount;
-  uint32_t idleColor = pixels.Color(0, 50, 90);
-
-  for (int i = start; i < end; i++) {
-    pixels.setPixelColor(i, idleColor);
-  }
-
   pixels.show();
 }
 
