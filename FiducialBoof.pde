@@ -156,3 +156,21 @@ PImage rotatePImageKeepSize(PImage src, float angleDeg) {
 
   return pg.get();
 }
+
+PImage flipPImageVerticallyKeepSize(PImage src) {
+  if (src == null) return null;
+
+  int w = src.width;
+  int h = src.height;
+
+  PGraphics pg = createGraphics(w, h, P2D);
+  pg.beginDraw();
+  pg.clear();
+  pg.imageMode(CENTER);
+  pg.translate(w * 0.5, h * 0.5);
+  pg.scale(1, -1);
+  pg.image(src, 0, 0);
+  pg.endDraw();
+
+  return pg.get();
+}

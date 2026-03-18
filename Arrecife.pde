@@ -839,13 +839,19 @@ void spawnNewFishFromSnapshot(PImage snapshot, float rotAfterProfileDeg) {
   }
 
   fishImage.updatePixels();
-  // Solución A: rotación SOLO después de calcular la alpha con ROI estable
-if (abs(rotAfterProfileDeg) > 0.0001) {
-  fishImage = rotatePImageKeepSize(fishImage, rotAfterProfileDeg);
-}
-
 
   int speciesIndex = assets.getSpeciesIndex();
+
+  if (speciesIndex == CFG.SHARK_SPECIES_INDEX) {
+    fishImage = flipPImageVerticallyKeepSize(fishImage);
+  }
+
+  // Rotación SOLO después de calcular la alpha con ROI estable.
+  if (abs(rotAfterProfileDeg) > 0.0001) {
+    fishImage = rotatePImageKeepSize(fishImage, rotAfterProfileDeg);
+  }
+
+
   float ms = (speciesIndex == CFG.SHARK_SPECIES_INDEX) ? 1.95 : random(0.8, 1.9);
   float mf = (speciesIndex == CFG.SHARK_SPECIES_INDEX) ? 0.24 : 0.2;
 
