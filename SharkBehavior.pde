@@ -36,6 +36,24 @@ class SharkBehavior extends SpeciesBehavior {
     agent.maxSpeed = agent.baseMaxSpeed * CFG.SHARK_CRUISE_SPEED_MULT;
     agent.maxForce = agent.baseMaxForce * CFG.SHARK_CRUISE_FORCE_MULT;
 
+    float sideMargin = width * CFG.SHARK_PATROL_SIDE_MARGIN;
+    float minX = sideMargin;
+    float maxX = width - sideMargin;
+    float turnZone = width * CFG.SHARK_TURN_TRIGGER_MARGIN;
+
+    if (!agent.turningAround) {
+      if (agent.velocity.x > 0 && agent.location.x >= maxX - turnZone) {
+        agent.beginTurnAround(-1, agent.maxSpeed * CFG.SHARK_CRUISE_SPEED_MULT);
+      } else if (agent.velocity.x < 0 && agent.location.x <= minX + turnZone) {
+        agent.beginTurnAround(1, agent.maxSpeed * CFG.SHARK_CRUISE_SPEED_MULT);
+      }
+    }
+
+    if (agent.turningAround) {
+      agent.acceleration.set(0, 0);
+      return;
+    }
+
     float wanderR = CFG.WANDER_R * 0.55;
     float wanderD = CFG.WANDER_D * 2.35;
     float change = CFG.WANDER_CHANGE * 0.45;
@@ -60,9 +78,6 @@ class SharkBehavior extends SpeciesBehavior {
     float minY = max(CFG.BORDER_PAD, laneCenterY - laneHalfHeight);
     float maxY = min(height - CFG.BORDER_PAD, laneCenterY + laneHalfHeight);
 
-    float sideMargin = width * CFG.SHARK_PATROL_SIDE_MARGIN;
-    float minX = sideMargin;
-    float maxX = width - sideMargin;
 
     float circleX = agent.location.x + vx * wanderD;
     float circleY = agent.location.y + vy * wanderD;
