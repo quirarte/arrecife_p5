@@ -82,6 +82,10 @@ class Config {
   final int SHARK_PATROL_MAX_FRAMES = 110;
   final float SHARK_PATROL_FORWARD_MIN = 0.82;
   final float SHARK_PATROL_SIDE_MARGIN = 0.08;
+  final float SHARK_TURN_TRIGGER_MARGIN = 0.10;
+  final float SHARK_TURN_FRAMES = 28;
+  final float SHARK_TURN_GLIDE_SPEED_MULT = 0.72;
+  final float SHARK_TURN_GLIDE_DAMPING = 0.94;
   final float SHARK_PATROL_MAX_PITCH_DEG = 18;
   final float SHARK_FOOD_VERTICAL_WEIGHT = 0.4;
   final float SHARK_FOOD_HEADING_WEIGHT = 0.6;
