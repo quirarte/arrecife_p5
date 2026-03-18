@@ -75,11 +75,13 @@ class Config {
   final float SHARK_CRUISE_FORCE_MULT = 0.95;
   final float SHARK_FOOD_SPEED_MULT = 2.2;
   final float SHARK_FOOD_FORCE_MULT = 1.2;
-  final float SHARK_PATROL_LOOKAHEAD = 220;
-  final float SHARK_PATROL_TURN_CHANGE = 0.04;
-  final float SHARK_PATROL_TURN_BLEND = 0.08;
   final float SHARK_PATROL_LANE_Y = 0.38;
-  final float SHARK_PATROL_LANE_PULL = 0.12;
+  final float SHARK_PATROL_BAND_HEIGHT = 0.22;
+  final float SHARK_PATROL_REACH_RADIUS = 90;
+  final int SHARK_PATROL_MIN_FRAMES = 45;
+  final int SHARK_PATROL_MAX_FRAMES = 110;
+  final float SHARK_PATROL_FORWARD_MIN = 0.82;
+  final float SHARK_PATROL_SIDE_MARGIN = 0.08;
   final float SHARK_FOOD_VERTICAL_WEIGHT = 0.4;
   final float SHARK_FOOD_HEADING_WEIGHT = 0.6;
   final float SHARK_BITE_RADIUS_MULT = 1.35;
