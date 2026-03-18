@@ -1,11 +1,19 @@
 class SharkSpawnBehavior extends SpawnBehavior {
 
   PVector getSpawnPosition(int selectedCell) {
-    float edgeInset = max(CFG.BORDER_PAD + 10, width * 0.06);
-    float spawnY = random(height * 0.18, height * 0.58);
-    boolean fromLeft = random(1) < 0.5;
-    float spawnX = fromLeft ? edgeInset : width - edgeInset;
-    return new PVector(spawnX, spawnY);
+    int maxCells = CFG.GRID_COLS * CFG.GRID_ROWS - 1;
+    int cellIdx = constrain(selectedCell, 0, maxCells);
+
+    float cellW = width / (float)CFG.GRID_COLS;
+    float cellH = height / (float)CFG.GRID_ROWS;
+
+    int col = cellIdx % CFG.GRID_COLS;
+    int row = cellIdx / CFG.GRID_COLS;
+
+    float cx = (col + 0.5) * cellW;
+    float cy = (row + 0.5) * cellH;
+
+    return new PVector(cx, cy);
   }
 
   void initializeAgent(AnimalAgent agent) {
@@ -17,5 +25,6 @@ class SharkSpawnBehavior extends SpawnBehavior {
     agent.velocity.normalize();
     agent.velocity.mult(agent.baseMaxSpeed * 0.9);
     agent.muscleFreq = CFG.MUSCLE_FREQ_MIN;
+    agent.deferMirrorUntilAfterFirstUpdate = false;
   }
 }
