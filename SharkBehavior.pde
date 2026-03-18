@@ -38,8 +38,9 @@ class SharkBehavior extends SpeciesBehavior {
     agent.maxForce = agent.baseMaxForce * CFG.SHARK_CRUISE_FORCE_MULT;
 
     updatePatrolTarget(agent);
-    keepForwardCruise(agent, patrolTarget.x, patrolTarget.y);
-    agent.applySteerTo(patrolTarget.x, patrolTarget.y, true, CFG.SHARK_PATROL_REACH_RADIUS * 1.4);
+    PVector patrolAim = getPatrolAim(agent);
+    keepForwardCruise(agent, patrolAim.x, patrolAim.y);
+    agent.applySteerTo(patrolAim.x, patrolAim.y, true, CFG.SHARK_PATROL_REACH_RADIUS * 1.4);
   }
 
   boolean seekClosestFood(AnimalAgent agent, ArrayList<FoodPellet> foods) {
@@ -160,5 +161,20 @@ class SharkBehavior extends SpeciesBehavior {
       agent.velocity.x = dirX * minForward;
       agent.velocity.y = dirY * minForward;
     }
+  }
+
+  PVector getPatrolAim(AnimalAgent agent) {
+    float dx = patrolTarget.x - agent.location.x;
+    float dy = patrolTarget.y - agent.location.y;
+
+    float maxPitchTan = tan(radians(CFG.SHARK_PATROL_MAX_PITCH_DEG));
+    float clampedDy = dy;
+
+    if (abs(dx) > 0.0001) {
+      float maxDy = abs(dx) * maxPitchTan;
+      clampedDy = constrain(dy, -maxDy, maxDy);
+    }
+
+    return new PVector(patrolTarget.x, agent.location.y + clampedDy);
   }
 }
