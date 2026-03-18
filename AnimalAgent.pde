@@ -18,6 +18,7 @@ class AnimalAgent extends FishBody {
   final PVector tmpMouthStable = new PVector();
   FoodPellet lockedFood = null;
   int lockedFoodFrames = 0;
+  boolean mirrorSpriteOnTurn = false;
 
   AnimalAgent(PImage _skin, PVector _location, float _maxSpeed, float _maxForce, int _speciesId) {
     super(_skin);
@@ -108,12 +109,14 @@ class AnimalAgent extends FishBody {
   }
 
   void display() {
-    float th = velocity.heading() + PI;
+    float th = getDisplayHeading();
+    boolean mirrored = shouldMirrorSprite();
 
     pushMatrix();
     translate(location.x, location.y);
+    if (mirrored) scale(-1, 1);
 
-    super.theta = degrees(th) + 180;
+    super.theta = degrees(th);
     super.display();
 
     popMatrix();
@@ -149,5 +152,24 @@ class AnimalAgent extends FishBody {
 
   void tryEat(ArrayList<FoodPellet> foods) {
     if (behavior != null) behavior.tryEat(this, foods);
+  }
+
+  float getDisplayHeading() {
+    if (!mirrorSpriteOnTurn) return velocity.heading();
+
+    float vx = velocity.x;
+    float vy = velocity.y;
+    if (abs(vx) < 0.0001 && abs(vy) < 0.0001) return 0;
+
+    return atan2(vy, abs(vx));
+  }
+
+  boolean shouldMirrorSprite() {
+    return mirrorSpriteOnTurn && velocity.x < 0;
+  }
+
+  void getMouthPointLocalStableForDisplay(PVector out) {
+    getMouthPointLocalStable(out);
+    if (shouldMirrorSprite()) out.x *= -1;
   }
 }
