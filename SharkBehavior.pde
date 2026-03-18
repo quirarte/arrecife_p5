@@ -15,7 +15,7 @@ class SharkBehavior extends SpeciesBehavior {
   void tryEat(AnimalAgent agent, ArrayList<FoodPellet> foods) {
     if (foods == null || foods.isEmpty()) return;
 
-    agent.getMouthPointLocalStable(agent.tmpMouthStable);
+    agent.getMouthPointLocalStableForDisplay(agent.tmpMouthStable);
     float mx = agent.location.x + agent.tmpMouthStable.x;
     float my = agent.location.y + agent.tmpMouthStable.y;
     float biteR = max(CFG.BITE_R_MIN, min(CFG.BITE_R_MAX * CFG.SHARK_BITE_RADIUS_MULT, agent.renderH * CFG.BITE_R_SCALE * CFG.SHARK_BITE_RADIUS_MULT));
@@ -57,7 +57,7 @@ class SharkBehavior extends SpeciesBehavior {
     agent.maxSpeed = agent.baseMaxSpeed * CFG.SHARK_FOOD_SPEED_MULT;
     agent.maxForce = agent.baseMaxForce * CFG.SHARK_FOOD_FORCE_MULT;
 
-    agent.getMouthPointLocalStable(agent.tmpMouthStable);
+    agent.getMouthPointLocalStableForDisplay(agent.tmpMouthStable);
     float targetX = best.pos.x - agent.tmpMouthStable.x;
     float targetY = best.pos.y - agent.tmpMouthStable.y;
 
