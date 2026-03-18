@@ -19,6 +19,7 @@ class AnimalAgent extends FishBody {
   FoodPellet lockedFood = null;
   int lockedFoodFrames = 0;
   boolean mirrorSpriteOnTurn = false;
+  boolean deferMirrorUntilAfterFirstUpdate = false;
 
   AnimalAgent(PImage _skin, PVector _location, float _maxSpeed, float _maxForce, int _speciesId) {
     super(_skin);
@@ -106,6 +107,8 @@ class AnimalAgent extends FishBody {
     super.muscleFreq = lerp(super.muscleFreq, targetFreq, CFG.MUSCLE_FREQ_LERP);
 
     super.move();
+
+    if (deferMirrorUntilAfterFirstUpdate) deferMirrorUntilAfterFirstUpdate = false;
   }
 
   void display() {
@@ -165,7 +168,7 @@ class AnimalAgent extends FishBody {
   }
 
   boolean shouldMirrorSprite() {
-    return mirrorSpriteOnTurn && velocity.x < 0;
+    return mirrorSpriteOnTurn && !deferMirrorUntilAfterFirstUpdate && velocity.x < 0;
   }
 
   void getMouthPointLocalStableForDisplay(PVector out) {
