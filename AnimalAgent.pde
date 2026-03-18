@@ -125,10 +125,13 @@ class AnimalAgent extends FishBody {
   void display() {
     float th = getDisplayHeading();
     float mirrorScale = getDisplayMirrorScale();
+    PVector bodyCenter = getBodyCenterLocalForDisplay();
 
     pushMatrix();
     translate(location.x, location.y);
+    translate(bodyCenter.x, bodyCenter.y);
     rotate(getDisplaySpinAngle());
+    translate(-bodyCenter.x, -bodyCenter.y);
     scale(mirrorScale, 1);
 
     super.theta = degrees(th);
@@ -245,5 +248,18 @@ class AnimalAgent extends FishBody {
   void getMouthPointLocalStableForDisplay(PVector out) {
     getMouthPointLocalStable(out);
     if (shouldMirrorSprite()) out.x *= -1;
+  }
+
+  PVector getBodyCenterLocalForDisplay() {
+    PVector out = new PVector();
+    if (node == null || node.length == 0) return out;
+
+    int tailIndex = max(0, numNodes - 1);
+    out.x = (node[0].x + node[tailIndex].x) * 0.5;
+    out.y = (node[0].y + node[tailIndex].y) * 0.5;
+
+    if (shouldMirrorSprite()) out.x *= -1;
+
+    return out;
   }
 }
