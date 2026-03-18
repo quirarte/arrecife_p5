@@ -1,9 +1,10 @@
 class SharkBehavior extends SpeciesBehavior {
 
-  float patrolTheta;
+  final PVector patrolTarget = new PVector();
+  int patrolTargetFrames = 0;
 
   SharkBehavior() {
-    patrolTheta = random(TWO_PI);
+    patrolTarget.set(-1, -1);
   }
 
   void updateMovement(AnimalAgent agent, ArrayList<FoodPellet> foods) {
@@ -36,27 +37,9 @@ class SharkBehavior extends SpeciesBehavior {
     agent.maxSpeed = agent.baseMaxSpeed * CFG.SHARK_CRUISE_SPEED_MULT;
     agent.maxForce = agent.baseMaxForce * CFG.SHARK_CRUISE_FORCE_MULT;
 
-    patrolTheta += random(-CFG.SHARK_PATROL_TURN_CHANGE, CFG.SHARK_PATROL_TURN_CHANGE);
-
-    float vx = agent.velocity.x;
-    float vy = agent.velocity.y;
-    if (vx*vx + vy*vy < 0.0001) {
-      vx = 1;
-      vy = 0;
-    }
-
-    float heading = atan2(vy, vx);
-    float targetHeading = heading + patrolTheta * CFG.SHARK_PATROL_TURN_BLEND;
-
-    float steerX = cos(targetHeading);
-    float steerY = sin(targetHeading);
-
-    float laneCenterY = height * CFG.SHARK_PATROL_LANE_Y;
-    float laneOffsetY = (laneCenterY - agent.location.y) * CFG.SHARK_PATROL_LANE_PULL;
-    float targetX = agent.location.x + steerX * CFG.SHARK_PATROL_LOOKAHEAD;
-    float targetY = agent.location.y + steerY * CFG.SHARK_PATROL_LOOKAHEAD + laneOffsetY;
-
-    agent.applySteerTo(targetX, targetY, false, 1);
+    updatePatrolTarget(agent);
+    keepForwardCruise(agent, patrolTarget.x, patrolTarget.y);
+    agent.applySteerTo(patrolTarget.x, patrolTarget.y, true, CFG.SHARK_PATROL_REACH_RADIUS * 1.4);
   }
 
   boolean seekClosestFood(AnimalAgent agent, ArrayList<FoodPellet> foods) {
@@ -122,5 +105,60 @@ class SharkBehavior extends SpeciesBehavior {
   void clearFoodLock(AnimalAgent agent) {
     agent.lockedFood = null;
     agent.lockedFoodFrames = 0;
+  }
+
+  void updatePatrolTarget(AnimalAgent agent) {
+    patrolTargetFrames++;
+
+    float dx = patrolTarget.x - agent.location.x;
+    float dy = patrolTarget.y - agent.location.y;
+    float reachR = CFG.SHARK_PATROL_REACH_RADIUS;
+    boolean reachedTarget = dx*dx + dy*dy <= reachR * reachR;
+    boolean invalidTarget = patrolTarget.x < 0 || patrolTarget.y < 0;
+    boolean timeout = patrolTargetFrames >= CFG.SHARK_PATROL_MAX_FRAMES;
+
+    if (invalidTarget || reachedTarget || timeout) {
+      choosePatrolTarget(agent, reachedTarget);
+    }
+  }
+
+  void choosePatrolTarget(AnimalAgent agent, boolean reachedTarget) {
+    float dirX = (agent.velocity.x >= 0) ? 1 : -1;
+    if (!reachedTarget && patrolTargetFrames < CFG.SHARK_PATROL_MIN_FRAMES) {
+      dirX = (patrolTarget.x >= agent.location.x) ? 1 : -1;
+    }
+
+    float sideMargin = width * CFG.SHARK_PATROL_SIDE_MARGIN;
+    float minX = sideMargin;
+    float maxX = width - sideMargin;
+    float minY = max(CFG.BORDER_PAD, height * (CFG.SHARK_PATROL_LANE_Y - CFG.SHARK_PATROL_BAND_HEIGHT));
+    float maxY = min(height - CFG.BORDER_PAD, height * (CFG.SHARK_PATROL_LANE_Y + CFG.SHARK_PATROL_BAND_HEIGHT));
+
+    float rawTargetX = (dirX > 0)
+      ? random(width * 0.62, maxX)
+      : random(minX, width * 0.38);
+    float rawTargetY = random(minY, maxY);
+
+    patrolTarget.set(constrain(rawTargetX, minX, maxX), constrain(rawTargetY, minY, maxY));
+    patrolTargetFrames = 0;
+  }
+
+  void keepForwardCruise(AnimalAgent agent, float targetX, float targetY) {
+    float dx = targetX - agent.location.x;
+    float dy = targetY - agent.location.y;
+    float d2 = dx*dx + dy*dy;
+    if (d2 < 0.000001) return;
+
+    float d = sqrt(d2);
+    float dirX = dx / d;
+    float dirY = dy / d;
+
+    float minForward = agent.maxSpeed * CFG.SHARK_PATROL_FORWARD_MIN;
+    float currentForward = agent.velocity.x * dirX + agent.velocity.y * dirY;
+
+    if (currentForward < minForward) {
+      agent.velocity.x = dirX * minForward;
+      agent.velocity.y = dirY * minForward;
+    }
   }
 }
