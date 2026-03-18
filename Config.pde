@@ -69,6 +69,21 @@ class Config {
   final float WANDER_D = 30;
   final float WANDER_CHANGE = 0.25;
 
+  final int SHARK_SPECIES_INDEX = 3;
+
+  final float SHARK_CRUISE_SPEED_MULT = 1.15;
+  final float SHARK_CRUISE_FORCE_MULT = 0.95;
+  final float SHARK_FOOD_SPEED_MULT = 2.2;
+  final float SHARK_FOOD_FORCE_MULT = 1.2;
+  final float SHARK_PATROL_LOOKAHEAD = 220;
+  final float SHARK_PATROL_TURN_CHANGE = 0.04;
+  final float SHARK_PATROL_TURN_BLEND = 0.08;
+  final float SHARK_PATROL_LANE_Y = 0.38;
+  final float SHARK_PATROL_LANE_PULL = 0.12;
+  final float SHARK_FOOD_VERTICAL_WEIGHT = 0.4;
+  final float SHARK_FOOD_HEADING_WEIGHT = 0.6;
+  final float SHARK_BITE_RADIUS_MULT = 1.35;
+
   // FishBody
   final int MOUTH_ALPHA_THR = 10;
   
