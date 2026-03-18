@@ -801,6 +801,14 @@ void updateAllBoidsSize() {
 // =========================
 // Spawn pez desde captura
 // =========================
+AnimalAgent createAgentForSpecies(int speciesIndex, PImage skin, PVector spawnLocation, float maxSpeed, float maxForce) {
+  if (speciesIndex == CFG.SHARK_SPECIES_INDEX) {
+    return new SharkAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
+  }
+
+  return new FishAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
+}
+
 void spawnNewFishFromSnapshot(PImage snapshot, float rotAfterProfileDeg) {
 
   int w = assets.getCamBufferW();
@@ -837,39 +845,34 @@ if (abs(rotAfterProfileDeg) > 0.0001) {
 }
 
 
-  PVector pos = getCellCenter(selectedCell);
+  int speciesIndex = assets.getSpeciesIndex();
+  float ms = (speciesIndex == CFG.SHARK_SPECIES_INDEX) ? 1.95 : random(0.8, 1.9);
+  float mf = (speciesIndex == CFG.SHARK_SPECIES_INDEX) ? 0.24 : 0.2;
 
-  float ms = random(0.8, 1.9);
-
-  AnimalAgent b = new FishAgent(
+  AnimalAgent b = createAgentForSpecies(
+    speciesIndex,
     fishImage,
-    new PVector(pos.x, pos.y),
+    new PVector(0, 0),
     ms,
-    0.2,
-    assets.getSpeciesIndex()
+    mf
   );
 
+  SpawnBehavior spawnBehavior = b.getSpawnBehavior();
+  PVector spawnPos = (spawnBehavior != null)
+    ? spawnBehavior.getSpawnPosition(selectedCell)
+    : new PVector(width * 0.5, height * 0.5);
+
+  b.location.set(spawnPos);
   b.setRenderSize(fishW, fishH);
-  b.muscleFreq = random(0.045, 0.085);
+
+  if (spawnBehavior != null) {
+    spawnBehavior.initializeAgent(b);
+  } else {
+    b.muscleFreq = random(CFG.MUSCLE_FREQ_MIN, CFG.MUSCLE_FREQ_MAX);
+  }
 
   tlwanderers.add(b);
   maybePrintStatsOnChange();
-}
-
-
-PVector getCellCenter(int cellIdx) {
-  cellIdx = constrain(cellIdx, 0, CFG.GRID_COLS * CFG.GRID_ROWS - 1);
-
-  float cellW = width / (float)CFG.GRID_COLS;
-  float cellH = height / (float)CFG.GRID_ROWS;
-
-  int col = cellIdx % CFG.GRID_COLS;
-  int row = cellIdx / CFG.GRID_COLS;
-
-  float cx = (col + 0.5) * cellW;
-  float cy = (row + 0.5) * cellH;
-
-  return new PVector(cx, cy);
 }
 
 // =========================

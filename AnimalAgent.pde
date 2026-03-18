@@ -13,6 +13,7 @@ class AnimalAgent extends FishBody {
   int speciesId = 0;
 
   SpeciesBehavior behavior;
+  SpawnBehavior spawnBehavior;
 
   final PVector tmpMouthStable = new PVector();
   FoodPellet lockedFood = null;
@@ -42,6 +43,14 @@ class AnimalAgent extends FishBody {
 
   SpeciesBehavior getBehavior() {
     return behavior;
+  }
+
+  void setSpawnBehavior(SpawnBehavior nextSpawnBehavior) {
+    spawnBehavior = nextSpawnBehavior;
+  }
+
+  SpawnBehavior getSpawnBehavior() {
+    return spawnBehavior;
   }
 
   void applySteerTo(float tx, float ty, boolean slowdown, float slowRadius) {
