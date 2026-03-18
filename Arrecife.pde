@@ -313,7 +313,7 @@ int fishW = 440;
 // =========================
 // Boids
 // =========================
-ArrayList<FishAgent> tlwanderers = new ArrayList<FishAgent>();
+ArrayList<AnimalAgent> tlwanderers = new ArrayList<AnimalAgent>();
 
 // =========================
 // Comida
@@ -454,13 +454,10 @@ void draw() {
 
   // Boids
   for (int i = 0; i < tlwanderers.size(); i++) {
-    FishAgent b = tlwanderers.get(i);
-
-    boolean chasing = b.seekClosestFood(foodPellets);
-    if (!chasing) b.wander();
-
+    AnimalAgent b = tlwanderers.get(i);
+    b.updateBehavior(foodPellets);
     b.run();
-    b.tryEatFoods(foodPellets);
+    b.tryEat(foodPellets);
   }
 
   // =========================
@@ -844,7 +841,7 @@ if (abs(rotAfterProfileDeg) > 0.0001) {
 
   float ms = random(0.8, 1.9);
 
-  FishAgent b = new FishAgent(
+  AnimalAgent b = new FishAgent(
     fishImage,
     new PVector(pos.x, pos.y),
     ms,
