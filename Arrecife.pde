@@ -151,9 +151,15 @@ void loadRuntimeConfig() {
 
       int defaultFiducialId = i + 1;
       int fiducialId = o.getInt("fiducial_id", defaultFiducialId);
-      if (fiducialId < CFG.FIDUCIAL_ID_MIN || fiducialId > CFG.FIDUCIAL_ID_MAX) {
+      boolean hasUpperFiducialLimit = (CFG.FIDUCIAL_ID_MAX >= CFG.FIDUCIAL_ID_MIN);
+      boolean fiducialOutOfRange = (fiducialId < CFG.FIDUCIAL_ID_MIN)
+        || (hasUpperFiducialLimit && fiducialId > CFG.FIDUCIAL_ID_MAX);
+      if (fiducialOutOfRange) {
+        String fidRangeMsg = hasUpperFiducialLimit
+          ? (CFG.FIDUCIAL_ID_MIN + ".." + CFG.FIDUCIAL_ID_MAX)
+          : ("mínimo " + CFG.FIDUCIAL_ID_MIN);
         println("WARNING: fiducial_id fuera de rango para species_profiles[" + i + "]: " + fiducialId
-          + ". Rango válido: " + CFG.FIDUCIAL_ID_MIN + ".." + CFG.FIDUCIAL_ID_MAX + ". Se ignora perfil.");
+          + ". Rango válido: " + fidRangeMsg + ". Se ignora perfil.");
         continue;
       }
 

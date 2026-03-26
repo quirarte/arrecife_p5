@@ -111,7 +111,9 @@ class Config {
 
   // IDs válidos, NO usarás 0
   final int FIDUCIAL_ID_MIN = 1;
-  final int FIDUCIAL_ID_MAX = 10;
+  // Sin límite superior: cualquier id >= FIDUCIAL_ID_MIN
+  // (si quieres reactivar límite, usa un valor >= FIDUCIAL_ID_MIN)
+  final int FIDUCIAL_ID_MAX = -1;
 
   // Solo rotación, en pasos de 90 grados
   final float FIDUCIAL_ROT_STEP_DEG = 90.0;

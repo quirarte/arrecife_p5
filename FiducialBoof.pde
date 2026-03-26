@@ -68,9 +68,17 @@ class BoofSquareBinaryManager {
 
     int bestId = (int)detector.getId(best);
 
-    if (bestId < idMin || bestId > idMax) {
+    boolean outOfLowerRange = (bestId < idMin);
+    boolean hasUpperBound = (idMax >= idMin);
+    boolean outOfUpperRange = hasUpperBound && (bestId > idMax);
+
+    if (outOfLowerRange || outOfUpperRange) {
       if (debug) {
-        println("FIDUCIAL: encontrado id=" + bestId + " fuera de rango " + idMin + ".." + idMax + ", ignorando");
+        if (hasUpperBound) {
+          println("FIDUCIAL: encontrado id=" + bestId + " fuera de rango " + idMin + ".." + idMax + ", ignorando");
+        } else {
+          println("FIDUCIAL: encontrado id=" + bestId + " fuera de rango (mínimo " + idMin + "), ignorando");
+        }
       }
       return out;
     }
