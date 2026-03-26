@@ -22,6 +22,7 @@ boolean[] cfgSpeciesFoodColorSet;
 float cfgFoodColorToneRange;
 String[] cfgFondoFiles;
 String[][] cfgSpeciesSoundPairs;
+int[] cfgSpeciesFiducialIds;
 
 String normalizeHexColor(String raw) {
   if (raw == null) return "";
@@ -81,6 +82,7 @@ void loadRuntimeConfig() {
 
   cfgFondoFiles = new String[0];
   cfgSpeciesSoundPairs = new String[0][2];
+  cfgSpeciesFiducialIds = new int[0];
 
   JSONObject runtimeCfg = loadJSONObject("app_config.json");
   if (runtimeCfg == null) {
@@ -133,6 +135,7 @@ void loadRuntimeConfig() {
   JSONArray speciesProfiles = runtimeCfg.getJSONArray("species_profiles");
   if (speciesProfiles != null && speciesProfiles.size() > 0) {
     String[][] parsedSpecies = new String[speciesProfiles.size()][2];
+    int[] parsedFiducials = new int[speciesProfiles.size()];
     int validSpecies = 0;
 
     for (int i = 0; i < speciesProfiles.size(); i++) {
@@ -146,16 +149,39 @@ void loadRuntimeConfig() {
       s2 = trim(s2);
       if (s1.length() == 0 || s2.length() == 0) continue;
 
+      int defaultFiducialId = i + 1;
+      int fiducialId = o.getInt("fiducial_id", defaultFiducialId);
+      if (fiducialId < CFG.FIDUCIAL_ID_MIN || fiducialId > CFG.FIDUCIAL_ID_MAX) {
+        println("WARNING: fiducial_id fuera de rango para species_profiles[" + i + "]: " + fiducialId
+          + ". Rango válido: " + CFG.FIDUCIAL_ID_MIN + ".." + CFG.FIDUCIAL_ID_MAX + ". Se ignora perfil.");
+        continue;
+      }
+
+      boolean duplicateFiducial = false;
+      for (int j = 0; j < validSpecies; j++) {
+        if (parsedFiducials[j] == fiducialId) {
+          duplicateFiducial = true;
+          break;
+        }
+      }
+      if (duplicateFiducial) {
+        println("WARNING: fiducial_id duplicado en species_profiles[" + i + "]: " + fiducialId + ". Se ignora perfil duplicado.");
+        continue;
+      }
+
       parsedSpecies[validSpecies][0] = s1;
       parsedSpecies[validSpecies][1] = s2;
+      parsedFiducials[validSpecies] = fiducialId;
       validSpecies++;
     }
 
     if (validSpecies > 0) {
       cfgSpeciesSoundPairs = new String[validSpecies][2];
+      cfgSpeciesFiducialIds = new int[validSpecies];
       for (int i = 0; i < validSpecies; i++) {
         cfgSpeciesSoundPairs[i][0] = parsedSpecies[i][0];
         cfgSpeciesSoundPairs[i][1] = parsedSpecies[i][1];
+        cfgSpeciesFiducialIds[i] = parsedFiducials[i];
       }
     }
   }
@@ -338,7 +364,7 @@ void setup() {
   // 1) AssetsManager con tamaño base del buffer
   assets = new AssetsManager(this, CFG.CAM_BUFFER_W, CFG.CAM_BUFFER_H);
   assets.setFondoFiles(cfgFondoFiles);
-  assets.setSpeciesProfiles(cfgSpeciesSoundPairs);
+  assets.setSpeciesProfiles(cfgSpeciesSoundPairs, cfgSpeciesFiducialIds);
   uiOverlay = new UIOverlay(this);
 
   // 2) Fondo inicial
@@ -500,7 +526,7 @@ float rotAfterProfileDeg = 0;
         rawDeg = hit.rawAngleDeg;
         snapDeg = hit.snappedAngleDeg;
 
-        int idx = markerId - 1; // id 1 -> pez 1 -> índice 0
+        int idx = assets.findSpeciesIndexByFiducialId(markerId);
         if (idx >= 0 && idx < assets.getSpeciesCount()) {
           assets.applySpeciesProfile(idx);
           accepted = true;

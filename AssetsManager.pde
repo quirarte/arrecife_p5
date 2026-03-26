@@ -4,10 +4,12 @@ class AssetsManager {
   // Config interna
   // =========================
   class SpeciesConfig {
+    int fiducialId;
     String sound1File;
     String sound2File;
 
-    SpeciesConfig(String sound1File, String sound2File) {
+    SpeciesConfig(int fiducialId, String sound1File, String sound2File) {
+      this.fiducialId = fiducialId;
       this.sound1File = sound1File;
       this.sound2File = sound2File;
     }
@@ -58,7 +60,7 @@ class AssetsManager {
   }
 
 
-  void setSpeciesProfiles(String[][] soundPairs) {
+  void setSpeciesProfiles(String[][] soundPairs, int[] fiducialIds) {
     if (soundPairs == null || soundPairs.length == 0) {
       speciesProfiles = new SpeciesConfig[0];
       speciesIndex = 0;
@@ -81,7 +83,22 @@ class AssetsManager {
       if (s1 == null || trim(s1).length() == 0) continue;
       if (s2 == null || trim(s2).length() == 0) continue;
 
-      loaded[valid++] = new SpeciesConfig(trim(s1), trim(s2));
+      int fiducialId = i + 1;
+      if (fiducialIds != null && i < fiducialIds.length) fiducialId = fiducialIds[i];
+
+      boolean duplicateFiducial = false;
+      for (int j = 0; j < valid; j++) {
+        if (loaded[j] != null && loaded[j].fiducialId == fiducialId) {
+          duplicateFiducial = true;
+          break;
+        }
+      }
+      if (duplicateFiducial) {
+        println("WARNING: fiducial_id duplicado en perfil de especie: " + fiducialId + ". Se ignora perfil.");
+        continue;
+      }
+
+      loaded[valid++] = new SpeciesConfig(fiducialId, trim(s1), trim(s2));
     }
 
     speciesProfiles = new SpeciesConfig[valid];
@@ -197,7 +214,18 @@ class AssetsManager {
 
     applySounds(cfg.sound1File, cfg.sound2File);
 
-    println("Especie activa: #" + (speciesIndex + 1));
+    println("Especie activa: #" + (speciesIndex + 1) + " (fiducial_id=" + cfg.fiducialId + ")");
+  }
+
+  int findSpeciesIndexByFiducialId(int fiducialId) {
+    if (speciesProfiles == null || speciesProfiles.length == 0) return -1;
+
+    for (int i = 0; i < speciesProfiles.length; i++) {
+      SpeciesConfig cfg = speciesProfiles[i];
+      if (cfg == null) continue;
+      if (cfg.fiducialId == fiducialId) return i;
+    }
+    return -1;
   }
 
   // =========================
