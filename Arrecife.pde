@@ -104,7 +104,7 @@ void loadRuntimeConfig() {
   cfgFoodColorToneRange = constrain(cfgFoodColorToneRange, 0.0, 1.0);
 
   for (int i = 0; i < cfgSpeciesFoodColors.length; i++) {
-    String key = "species_color_" + (i + 1);
+    String key = "food_color_" + (i + 1);
     String colorRaw = runtimeCfg.getString(key, "");
     if (colorRaw == null || trim(colorRaw).length() == 0) continue;
 
