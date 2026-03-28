@@ -19,7 +19,7 @@
   "species_profiles": [
     {
       "fiducial_id": 1,
-      "food": "food_color_8",
+      "food": "food_color_6",
       "sound1": "splash.wav",
       "sound2": "hai-hai.mp3"
     },
