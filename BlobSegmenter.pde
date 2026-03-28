@@ -6,8 +6,15 @@ class BlobSegmenter {
   final int W;
   final int H;
 
+  static final int MARKER_TOP_LEFT = 1;
+  static final int MARKER_TOP_RIGHT = 2;
+  static final int MARKER_BOTTOM_RIGHT = 3;
+  static final int MARKER_BOTTOM_LEFT = 4;
+
   // ROI en coords del buffer (W,H)
   int roiX, roiY, roiW, roiH;
+  int roiExtentX, roiExtentY;
+  int markerPlacement = MARKER_TOP_LEFT;
 
   // Umbral para considerar "blanco"
   // Foreground si maxRGB < whiteThr
@@ -29,6 +36,8 @@ class BlobSegmenter {
     this.roiY = (int)(H * 0.15);
     this.roiW = (int)(W * 0.60);
     this.roiH = (int)(H * 0.70);
+    this.roiExtentX = this.roiW;
+    this.roiExtentY = this.roiH;
 
     int n = W * H;
     binary = new int[n];
@@ -51,23 +60,53 @@ class BlobSegmenter {
     roiY = constrain(roiY, 0, H - roiH);
   }
 
-  void setROI(int x, int y, int w, int h) {
-    roiX = x;
-    roiY = y;
-    roiW = w;
-    roiH = h;
-    clampROI();
+  int getAnchorCornerIndex() {
+    if (markerPlacement == MARKER_TOP_LEFT) return 2;      // BR
+    if (markerPlacement == MARKER_TOP_RIGHT) return 3;     // BL
+    if (markerPlacement == MARKER_BOTTOM_RIGHT) return 0;  // TL
+    return 1;                                               // TR
   }
 
-  void nudgeMove(int dx, int dy) {
-    roiX += dx;
-    roiY += dy;
-    clampROI();
+  int getGrowXSign() {
+    if (markerPlacement == MARKER_BOTTOM_LEFT) return 1;
+    return -1;
   }
 
-  void nudgeSize(int dw, int dh) {
-    roiW += dw;
-    roiH += dh;
+  int getGrowYSign() {
+    if (markerPlacement == MARKER_BOTTOM_RIGHT || markerPlacement == MARKER_BOTTOM_LEFT) return -1;
+    return 1;
+  }
+
+  void setMarkerPlacement(int placement) {
+    if (placement < MARKER_TOP_LEFT || placement > MARKER_BOTTOM_LEFT) return;
+    markerPlacement = placement;
+  }
+
+  void nudgeExtent(int dx, int dy) {
+    roiExtentX = max(10, min(W, roiExtentX + dx));
+    roiExtentY = max(10, min(H, roiExtentY + dy));
+  }
+
+  void updateFromFiducialCorners(float[] corners) {
+    if (corners == null || corners.length < 8) return;
+
+    int anchorIdx = getAnchorCornerIndex();
+    int base = anchorIdx * 2;
+    float ax = corners[base];
+    float ay = corners[base + 1];
+
+    float x2 = ax + getGrowXSign() * roiExtentX;
+    float y2 = ay + getGrowYSign() * roiExtentY;
+
+    int minX = round(min(ax, x2));
+    int maxX = round(max(ax, x2));
+    int minY = round(min(ay, y2));
+    int maxY = round(max(ay, y2));
+
+    roiX = constrain(minX, 0, W - 1);
+    roiY = constrain(minY, 0, H - 1);
+    roiW = max(10, min(W - roiX, maxX - minX));
+    roiH = max(10, min(H - roiY, maxY - minY));
     clampROI();
   }
 
@@ -83,18 +122,21 @@ class BlobSegmenter {
       JSONObject j = p.loadJSONObject(path);
       if (j == null) return false;
 
-      roiX = j.getInt("x", roiX);
-      roiY = j.getInt("y", roiY);
-      roiW = j.getInt("w", roiW);
-      roiH = j.getInt("h", roiH);
+      int loadedPlacement = j.getInt("markerPlacement");
+      int loadedExtentX = j.getInt("extentX");
+      int loadedExtentY = j.getInt("extentY");
 
+      setMarkerPlacement(loadedPlacement);
+      roiExtentX = loadedExtentX;
+      roiExtentY = loadedExtentY;
       whiteThr = j.getInt("whiteThr", whiteThr);
-      clampROI();
-      println("ROI cargado desde roi.json: x=" + roiX + " y=" + roiY + " w=" + roiW + " h=" + roiH
-        + " whiteThr=" + whiteThr);
+      roiExtentX = max(10, min(W, roiExtentX));
+      roiExtentY = max(10, min(H, roiExtentY));
+      println("ROI cargado desde roi.json: markerPlacement=" + markerPlacement
+        + " extentX=" + roiExtentX + " extentY=" + roiExtentY + " whiteThr=" + whiteThr);
       return true;
     } catch (Exception e) {
-      println("Error al cargar roi.json: " + e);
+      println("Error al cargar roi.json (formato nuevo requerido): " + e);
       return false;
     }
   }
@@ -102,11 +144,9 @@ class BlobSegmenter {
   boolean saveROI() {
     try {
       JSONObject j = new JSONObject();
-      j.setInt("x", roiX);
-      j.setInt("y", roiY);
-      j.setInt("w", roiW);
-      j.setInt("h", roiH);
-
+      j.setInt("markerPlacement", markerPlacement);
+      j.setInt("extentX", roiExtentX);
+      j.setInt("extentY", roiExtentY);
       j.setInt("whiteThr", whiteThr);
       p.saveJSONObject(j, roiPath());
       println("ROI guardado en roi.json");
@@ -249,4 +289,7 @@ int[] buildAlphaFromSnapshot(PImage snap) {
   int getRoiY() { return roiY; }
   int getRoiW() { return roiW; }
   int getRoiH() { return roiH; }
+  int getExtentX() { return roiExtentX; }
+  int getExtentY() { return roiExtentY; }
+  int getMarkerPlacement() { return markerPlacement; }
 }

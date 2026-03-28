@@ -104,7 +104,7 @@ class UIOverlay {
   void drawRoiPreviewAndOverlay(int x, int y, int w, int h,
       PGraphics camBuffer, boolean camHasFrame,
       int roiX, int roiY, int roiW, int roiH,
-      int roiStep, int whiteThr) {
+      int roiStep, int whiteThr, int markerPlacement, int extentX, int extentY) {
     if (camBuffer == null) return;
 
     p.noStroke();
@@ -134,9 +134,9 @@ class UIOverlay {
     p.fill(255);
     p.textSize(14);
     p.textAlign(LEFT, TOP);
-    p.text("ROI modo, flechas mueve, Shift+flechas cambia tamaño", x, y + h + 6);
-    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr, x, y + h + 24);
-    p.text("J,K whiteThr, O sale", x, y + h + 42);
+    p.text("ROI anclado a fiducial: flechas cambian tamaño (LEFT/RIGHT=X, UP/DOWN=Y)", x, y + h + 6);
+    p.text("1..4 marcador hoja TL/TR/BR/BL=" + markerPlacement + " extents=(" + extentX + "," + extentY + ")", x, y + h + 24);
+    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr + " | J,K thr | O sale", x, y + h + 42);
   }
 
   void drawHelpMenu(int speciesCount) {

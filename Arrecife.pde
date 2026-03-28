@@ -356,6 +356,7 @@ ArrayList<FoodPellet> foodPellets = new ArrayList<FoodPellet>();
 // ROI calib UI
 // =========================
 int roiStep = 4; // paso de movimiento o tamaño en pixeles del buffer 640x480
+FiducialHit lastFiducialHit = null;
 
 void settings() {
   size(CFG.CANVAS_W, CFG.CANVAS_H, P2D);
@@ -427,7 +428,8 @@ void setup() {
 
   // 7) Blobber, cargar ROI desde roi.json si existe
   blobber = new BlobSegmenter(this, CFG.CAM_BUFFER_W, CFG.CAM_BUFFER_H);
-  blobber.setROI(CFG.ROI_X_DEFAULT, CFG.ROI_Y_DEFAULT, CFG.ROI_W_DEFAULT, CFG.ROI_H_DEFAULT);
+  blobber.roiExtentX = CFG.ROI_W_DEFAULT;
+  blobber.roiExtentY = CFG.ROI_H_DEFAULT;
   blobber.whiteThr = CFG.BLOB_WHITE_THR_DEFAULT;
   blobber.loadROI();
   
@@ -504,10 +506,18 @@ void draw() {
   } else if (uiMode == UI_HELP) {
     uiOverlay.drawHelpMenu(assets.getSpeciesCount());
   } else if (uiMode == UI_ROI) {
+    if (CFG.FIDUCIAL_ENABLED && fidu != null && camHasFrame && camBuffer != null) {
+      FiducialHit uiHit = fidu.detect(camBuffer.get());
+      if (uiHit != null && uiHit.found) {
+        lastFiducialHit = uiHit;
+        blobber.updateFromFiducialCorners(uiHit.corners);
+      }
+    }
+
     uiOverlay.drawRoiPreviewAndOverlay(10, 40, CFG.PREVIEW_W, CFG.PREVIEW_H,
       camBuffer, camHasFrame,
       blobber.getRoiX(), blobber.getRoiY(), blobber.getRoiW(), blobber.getRoiH(),
-      roiStep, blobber.whiteThr);
+      roiStep, blobber.whiteThr, blobber.getMarkerPlacement(), blobber.getExtentX(), blobber.getExtentY());
   }
 
   // Post (fiducial + applySpeciesProfile + sonidos + spawn)
@@ -528,6 +538,7 @@ float rotAfterProfileDeg = 0;
       FiducialHit hit = fidu.detect(frozenSnap);
 
       if (hit != null && hit.found) {
+        lastFiducialHit = hit;
         markerId = hit.id;
         rawDeg = hit.rawAngleDeg;
         snapDeg = hit.snappedAngleDeg;
@@ -565,6 +576,10 @@ rotAfterProfileDeg = -snapDeg;
     }
 
     if (shouldScan) {
+      if (lastFiducialHit != null && lastFiducialHit.corners != null) {
+        blobber.updateFromFiducialCorners(lastFiducialHit.corners);
+      }
+
       // 2) Reproducir sonidos DESPUÉS de applySpeciesProfile (si hubo)
       SoundFile s1 = assets.getSound1();
       SoundFile s2 = assets.getSound2();
@@ -673,31 +688,26 @@ boolean handleUiKeys() {
     // Guardar / cargar
     if (key == 's' || key == 'S') { blobber.saveROI(); return true; }
     if (key == 'l' || key == 'L') { blobber.loadROI(); return true; }
+    if (key == '1') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_TOP_LEFT); return true; }
+    if (key == '2') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_TOP_RIGHT); return true; }
+    if (key == '3') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_BOTTOM_RIGHT); return true; }
+    if (key == '4') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_BOTTOM_LEFT); return true; }
 
-    // Flechas, mover o redimensionar con Shift
+    // Flechas: ajustar extents del ROI anclado
     if (key == CODED) {
-      boolean shiftDown = (keyEvent != null && keyEvent.isShiftDown());
+      int dExtentX = 0;
+      int dExtentY = 0;
 
-      int dx = 0, dy = 0, dw = 0, dh = 0;
-
-      if (!shiftDown) {
-        if (keyCode == LEFT)  dx = -roiStep;
-        if (keyCode == RIGHT) dx = +roiStep;
-        if (keyCode == UP)    dy = -roiStep;
-        if (keyCode == DOWN)  dy = +roiStep;
-        if (dx != 0 || dy != 0) {
-          blobber.nudgeMove(dx, dy);
-          return true;
+      if (keyCode == LEFT)  dExtentX = +roiStep;
+      if (keyCode == RIGHT) dExtentX = -roiStep;
+      if (keyCode == DOWN)  dExtentY = +roiStep;
+      if (keyCode == UP)    dExtentY = -roiStep;
+      if (dExtentX != 0 || dExtentY != 0) {
+        blobber.nudgeExtent(dExtentX, dExtentY);
+        if (lastFiducialHit != null && lastFiducialHit.corners != null) {
+          blobber.updateFromFiducialCorners(lastFiducialHit.corners);
         }
-      } else {
-        if (keyCode == LEFT)  dw = -roiStep;
-        if (keyCode == RIGHT) dw = +roiStep;
-        if (keyCode == UP)    dh = -roiStep;
-        if (keyCode == DOWN)  dh = +roiStep;
-        if (dw != 0 || dh != 0) {
-          blobber.nudgeSize(dw, dh);
-          return true;
-        }
+        return true;
       }
     }
 

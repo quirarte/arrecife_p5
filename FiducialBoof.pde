@@ -15,6 +15,7 @@ class FiducialHit {
   int id = -1;
   float rawAngleDeg = 0;
   float snappedAngleDeg = 0;
+  float[] corners = null; // x0,y0,x1,y1,x2,y2,x3,y3 (orden del detector)
 }
 
 class BoofSquareBinaryManager {
@@ -99,6 +100,12 @@ class BoofSquareBinaryManager {
     out.id = bestId;
     out.rawAngleDeg = raw;
     out.snappedAngleDeg = snapped;
+    out.corners = new float[8];
+    for (int i = 0; i < 4; i++) {
+      Point2D_F64 cp = poly.get(i);
+      out.corners[i * 2] = (float)cp.x;
+      out.corners[i * 2 + 1] = (float)cp.y;
+    }
 
     return out;
   }
