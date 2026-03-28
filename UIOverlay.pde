@@ -103,7 +103,7 @@ class UIOverlay {
 
   void drawRoiPreviewAndOverlay(int x, int y, int w, int h,
       PGraphics camBuffer, boolean camHasFrame,
-      int roiX, int roiY, int roiW, int roiH,
+      int roiX, int roiY, int roiW, int roiH, float[] roiQuad,
       int roiStep, int whiteThr, int markerPlacement, int extentX, int extentY) {
     if (camBuffer == null) return;
 
@@ -129,7 +129,22 @@ class UIOverlay {
     p.stroke(0, 255, 0);
     p.strokeWeight(2);
     p.noFill();
-    p.rect(rx, ry, rw, rh);
+
+    boolean drewQuad = false;
+    if (roiQuad != null && roiQuad.length >= 8) {
+      p.beginShape();
+      for (int i = 0; i < 4; i++) {
+        float qx = x + roiQuad[i * 2] * sx;
+        float qy = y + roiQuad[i * 2 + 1] * sy;
+        p.vertex(qx, qy);
+      }
+      p.endShape(CLOSE);
+      drewQuad = true;
+    }
+
+    if (!drewQuad) {
+      p.rect(rx, ry, rw, rh);
+    }
 
     p.fill(255);
     p.textSize(14);

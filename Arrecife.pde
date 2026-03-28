@@ -516,7 +516,7 @@ void draw() {
 
     uiOverlay.drawRoiPreviewAndOverlay(10, 40, CFG.PREVIEW_W, CFG.PREVIEW_H,
       camBuffer, camHasFrame,
-      blobber.getRoiX(), blobber.getRoiY(), blobber.getRoiW(), blobber.getRoiH(),
+      blobber.getRoiX(), blobber.getRoiY(), blobber.getRoiW(), blobber.getRoiH(), blobber.getRoiQuad(),
       roiStep, blobber.whiteThr, blobber.getMarkerPlacement(), blobber.getExtentX(), blobber.getExtentY());
   }
 
