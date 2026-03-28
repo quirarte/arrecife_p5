@@ -19,26 +19,31 @@
   "species_profiles": [
     {
       "fiducial_id": 1,
+      "food": "food_color_1",
       "sound1": "splash.wav",
       "sound2": "hai-hai.mp3"
     },
     {
       "fiducial_id": 2,
+      "food": "food_color_2",
       "sound1": "splash.wav",
       "sound2": "yahoo.wav"
     },
     {
       "fiducial_id": 3,
+      "food": "food_color_2",
       "sound1": "splash.wav",
       "sound2": "caballito.mp3"
     },
     {
       "fiducial_id": 4,
+      "food": "food_color_4",
       "sound1": "splash.wav",
       "sound2": "shark.mp3"
     },
     {
       "fiducial_id": 10,
+      "food": "food_color_4",
       "sound1": "splash.wav",
       "sound2": "shark.mp3"
     }

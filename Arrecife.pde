@@ -23,6 +23,7 @@ float cfgFoodColorToneRange;
 String[] cfgFondoFiles;
 String[][] cfgSpeciesSoundPairs;
 int[] cfgSpeciesFiducialIds;
+int[] cfgSpeciesFoodIds;
 
 String normalizeHexColor(String raw) {
   if (raw == null) return "";
@@ -83,6 +84,7 @@ void loadRuntimeConfig() {
   cfgFondoFiles = new String[0];
   cfgSpeciesSoundPairs = new String[0][2];
   cfgSpeciesFiducialIds = new int[0];
+  cfgSpeciesFoodIds = new int[0];
 
   JSONObject runtimeCfg = loadJSONObject("app_config.json");
   if (runtimeCfg == null) {
@@ -136,6 +138,7 @@ void loadRuntimeConfig() {
   if (speciesProfiles != null && speciesProfiles.size() > 0) {
     String[][] parsedSpecies = new String[speciesProfiles.size()][2];
     int[] parsedFiducials = new int[speciesProfiles.size()];
+    int[] parsedFoods = new int[speciesProfiles.size()];
     int validSpecies = 0;
 
     for (int i = 0; i < speciesProfiles.size(); i++) {
@@ -175,19 +178,52 @@ void loadRuntimeConfig() {
         continue;
       }
 
+      int defaultFoodId = i;
+      int foodId = defaultFoodId;
+      String foodRaw = o.getString("food", "");
+      if (foodRaw != null) foodRaw = trim(foodRaw);
+
+      if (foodRaw != null && foodRaw.length() > 0) {
+        String normalized = foodRaw.toLowerCase();
+        if (normalized.startsWith("food_color_")) {
+          String suffix = normalized.substring("food_color_".length());
+          if (suffix.length() > 0) {
+            int parsed = parseInt(suffix, -1);
+            if (parsed >= 1) foodId = parsed - 1;
+            else println("WARNING: food inválido en species_profiles[" + i + "]: '" + foodRaw + "'. Usa formato food_color_X");
+          } else {
+            println("WARNING: food vacío en species_profiles[" + i + "]. Usa formato food_color_X");
+          }
+        } else {
+          int parsed = parseInt(normalized, -1);
+          if (parsed >= 1) foodId = parsed - 1;
+          else if (parsed >= 0) foodId = parsed;
+          else println("WARNING: food inválido en species_profiles[" + i + "]: '" + foodRaw + "'. Usa food_color_X o índice numérico.");
+        }
+      }
+
+      if (foodId < 0 || foodId >= CFG.MAX_SPECIES_KEYS) {
+        println("WARNING: food fuera de rango en species_profiles[" + i + "]: " + foodId
+          + ". Rango válido: 0.." + (CFG.MAX_SPECIES_KEYS - 1) + ". Se usa " + defaultFoodId + " por compatibilidad.");
+        foodId = constrain(defaultFoodId, 0, CFG.MAX_SPECIES_KEYS - 1);
+      }
+
       parsedSpecies[validSpecies][0] = s1;
       parsedSpecies[validSpecies][1] = s2;
       parsedFiducials[validSpecies] = fiducialId;
+      parsedFoods[validSpecies] = foodId;
       validSpecies++;
     }
 
     if (validSpecies > 0) {
       cfgSpeciesSoundPairs = new String[validSpecies][2];
       cfgSpeciesFiducialIds = new int[validSpecies];
+      cfgSpeciesFoodIds = new int[validSpecies];
       for (int i = 0; i < validSpecies; i++) {
         cfgSpeciesSoundPairs[i][0] = parsedSpecies[i][0];
         cfgSpeciesSoundPairs[i][1] = parsedSpecies[i][1];
         cfgSpeciesFiducialIds[i] = parsedFiducials[i];
+        cfgSpeciesFoodIds[i] = parsedFoods[i];
       }
     }
   }
@@ -844,11 +880,20 @@ void updateAllBoidsSize() {
 // Spawn pez desde captura
 // =========================
 AnimalAgent createAgentForSpecies(int speciesIndex, PImage skin, PVector spawnLocation, float maxSpeed, float maxForce) {
-  if (speciesIndex == CFG.SHARK_SPECIES_INDEX) {
-    return new SharkAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
+  int foodSpeciesId = speciesIndex;
+  if (cfgSpeciesFoodIds != null && speciesIndex >= 0 && speciesIndex < cfgSpeciesFoodIds.length) {
+    foodSpeciesId = cfgSpeciesFoodIds[speciesIndex];
   }
 
-  return new FishAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
+  AnimalAgent agent = null;
+  if (speciesIndex == CFG.SHARK_SPECIES_INDEX) {
+    agent = new SharkAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
+  } else {
+    agent = new FishAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
+  }
+
+  agent.setFoodSpeciesId(foodSpeciesId);
+  return agent;
 }
 
 void spawnNewFishFromSnapshot(PImage snapshot, float rotAfterProfileDeg) {

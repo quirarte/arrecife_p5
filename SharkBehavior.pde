@@ -21,7 +21,7 @@ class SharkBehavior extends SpeciesBehavior {
 
     for (int i = foods.size() - 1; i >= 0; i--) {
       FoodPellet p = foods.get(i);
-      if (p.speciesId != agent.speciesId) continue;
+      if (p.speciesId != agent.foodSpeciesId) continue;
 
       float dx = mx - p.pos.x;
       float dy = my - p.pos.y;
@@ -153,7 +153,7 @@ class SharkBehavior extends SpeciesBehavior {
     if (agent.lockedFood != null && agent.lockedFoodFrames < CFG.LOCK_FRAMES * 2) {
       for (int i = 0; i < foods.size(); i++) {
         FoodPellet p = foods.get(i);
-        if (p == agent.lockedFood && p.speciesId == agent.speciesId) {
+        if (p == agent.lockedFood && p.speciesId == agent.foodSpeciesId) {
           agent.lockedFoodFrames++;
           return p;
         }
@@ -168,7 +168,7 @@ class SharkBehavior extends SpeciesBehavior {
 
     for (int i = 0; i < foods.size(); i++) {
       FoodPellet p = foods.get(i);
-      if (p.speciesId != agent.speciesId) continue;
+      if (p.speciesId != agent.foodSpeciesId) continue;
 
       float dx = p.pos.x - agent.location.x;
       float dy = p.pos.y - agent.location.y;
