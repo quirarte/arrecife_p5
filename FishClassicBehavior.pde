@@ -98,7 +98,7 @@ class FishClassicBehavior extends SpeciesBehavior {
           break;
         }
       }
-      if (stillThere && agent.lockedFood.speciesId == agent.speciesId) {
+      if (stillThere && agent.lockedFood.speciesId == agent.foodSpeciesId) {
         agent.lockedFoodFrames++;
         return agent.lockedFood;
       } else {
@@ -111,7 +111,7 @@ class FishClassicBehavior extends SpeciesBehavior {
 
     for (int i = 0; i < foods.size(); i++) {
       FoodPellet p = foods.get(i);
-      if (p.speciesId != agent.speciesId) continue;
+      if (p.speciesId != agent.foodSpeciesId) continue;
 
       float dx = p.pos.x - agent.location.x;
       float dy = p.pos.y - agent.location.y;
@@ -149,7 +149,7 @@ class FishClassicBehavior extends SpeciesBehavior {
 
     for (int i = foods.size() - 1; i >= 0; i--) {
       FoodPellet p = foods.get(i);
-      if (p.speciesId != agent.speciesId) continue;
+      if (p.speciesId != agent.foodSpeciesId) continue;
 
       float dx = mx - p.pos.x;
       float dy = my - p.pos.y;

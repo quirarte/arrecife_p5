@@ -11,6 +11,7 @@ class AnimalAgent extends FishBody {
   float baseMaxForce;
 
   int speciesId = 0;
+  int foodSpeciesId = 0;
 
   SpeciesBehavior behavior;
   SpawnBehavior spawnBehavior;
@@ -33,6 +34,7 @@ class AnimalAgent extends FishBody {
     super(_skin);
 
     speciesId = _speciesId;
+    foodSpeciesId = _speciesId;
 
     location = _location.copy();
     velocity = new PVector(random(-1, 1), random(-1, 1));
@@ -58,6 +60,10 @@ class AnimalAgent extends FishBody {
 
   void setSpawnBehavior(SpawnBehavior nextSpawnBehavior) {
     spawnBehavior = nextSpawnBehavior;
+  }
+
+  void setFoodSpeciesId(int nextFoodSpeciesId) {
+    foodSpeciesId = nextFoodSpeciesId;
   }
 
   SpawnBehavior getSpawnBehavior() {
