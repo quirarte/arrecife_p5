@@ -78,8 +78,8 @@ void loadRuntimeConfig() {
   // (normalmente lo cambias únicamente en el JSON).
   cfgIdleLedCount = cfgFlashLedCount;
   cfgFoodColorToneRange = 0.20;
-  cfgSpeciesFoodColors = new int[CFG.MAX_SPECIES_KEYS];
-  cfgSpeciesFoodColorSet = new boolean[CFG.MAX_SPECIES_KEYS];
+  cfgSpeciesFoodColors = new int[0];
+  cfgSpeciesFoodColorSet = new boolean[0];
 
   cfgFondoFiles = new String[0];
   cfgSpeciesSoundPairs = new String[0][2];
@@ -105,17 +105,35 @@ void loadRuntimeConfig() {
   cfgFoodColorToneRange = runtimeCfg.getFloat("food_color_tone_range", cfgFoodColorToneRange);
   cfgFoodColorToneRange = constrain(cfgFoodColorToneRange, 0.0, 1.0);
 
-  for (int i = 0; i < cfgSpeciesFoodColors.length; i++) {
-    String key = "food_color_" + (i + 1);
-    String colorRaw = runtimeCfg.getString(key, "");
-    if (colorRaw == null || trim(colorRaw).length() == 0) continue;
+  JSONArray foodColors = runtimeCfg.getJSONArray("food_colors");
+  if (foodColors == null || foodColors.size() == 0) {
+    println("ERROR: app_config.json requiere 'food_colors' como array no vacío.");
+    return;
+  }
+
+  cfgSpeciesFoodColors = new int[foodColors.size()];
+  cfgSpeciesFoodColorSet = new boolean[foodColors.size()];
+  int validFoodColors = 0;
+
+  for (int i = 0; i < foodColors.size(); i++) {
+    String colorRaw = foodColors.getString(i, "");
+    if (colorRaw == null || trim(colorRaw).length() == 0) {
+      println("WARNING: food_colors[" + i + "] vacío. Se ignora.");
+      continue;
+    }
 
     if (isValidHexColor(colorRaw)) {
       cfgSpeciesFoodColors[i] = parseHexColor(colorRaw);
       cfgSpeciesFoodColorSet[i] = true;
+      validFoodColors++;
     } else {
-      println("WARNING: formato inválido para " + key + "='" + colorRaw + "'. Usa #RRGGBB o #AARRGGBB");
+      println("WARNING: formato inválido para food_colors[" + i + "]='" + colorRaw + "'. Usa #RRGGBB o #AARRGGBB");
     }
+  }
+
+  if (validFoodColors == 0) {
+    println("ERROR: no hay colores válidos en 'food_colors'.");
+    return;
   }
 
 
@@ -178,34 +196,11 @@ void loadRuntimeConfig() {
         continue;
       }
 
-      int defaultFoodId = i;
-      int foodId = defaultFoodId;
-      String foodRaw = o.getString("food", "");
-      if (foodRaw != null) foodRaw = trim(foodRaw);
-
-      if (foodRaw != null && foodRaw.length() > 0) {
-        String normalized = foodRaw.toLowerCase();
-        if (normalized.startsWith("food_color_")) {
-          String suffix = normalized.substring("food_color_".length());
-          if (suffix.length() > 0) {
-            int parsed = parseInt(suffix, -1);
-            if (parsed >= 1) foodId = parsed - 1;
-            else println("WARNING: food inválido en species_profiles[" + i + "]: '" + foodRaw + "'. Usa formato food_color_X");
-          } else {
-            println("WARNING: food vacío en species_profiles[" + i + "]. Usa formato food_color_X");
-          }
-        } else {
-          int parsed = parseInt(normalized, -1);
-          if (parsed >= 1) foodId = parsed - 1;
-          else if (parsed >= 0) foodId = parsed;
-          else println("WARNING: food inválido en species_profiles[" + i + "]: '" + foodRaw + "'. Usa food_color_X o índice numérico.");
-        }
-      }
-
-      if (foodId < 0 || foodId >= CFG.MAX_SPECIES_KEYS) {
-        println("WARNING: food fuera de rango en species_profiles[" + i + "]: " + foodId
-          + ". Rango válido: 0.." + (CFG.MAX_SPECIES_KEYS - 1) + ". Se usa " + defaultFoodId + " por compatibilidad.");
-        foodId = constrain(defaultFoodId, 0, CFG.MAX_SPECIES_KEYS - 1);
+      int foodId = o.getInt("food", -1);
+      if (foodId < 0 || foodId >= cfgSpeciesFoodColors.length || !cfgSpeciesFoodColorSet[foodId]) {
+        println("WARNING: food fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
+          + ". Rango válido: 0.." + (cfgSpeciesFoodColors.length - 1) + ". Se ignora perfil.");
+        continue;
       }
 
       parsedSpecies[validSpecies][0] = s1;
@@ -236,19 +231,21 @@ void loadRuntimeConfig() {
     + " flash_duration_ms=" + cfgFlashDurationMs
     + " idle_led_count=" + cfgIdleLedCount
     + " food_color_tone_range=" + nf(cfgFoodColorToneRange, 1, 3)
+    + " food_colors=" + cfgSpeciesFoodColors.length
     + " species_profiles=" + ((cfgSpeciesSoundPairs == null) ? 0 : cfgSpeciesSoundPairs.length)
     + " fondo_files=" + ((cfgFondoFiles == null) ? 0 : cfgFondoFiles.length));
 }
 
 void initStatsIfNeeded() {
-  if (lastFoodPrinted == null) {
-    lastFoodPrinted = new int[CFG.MAX_SPECIES_KEYS];
+  int foodTypeCount = max(1, cfgSpeciesFoodColors.length);
+  if (lastFoodPrinted == null || lastFoodPrinted.length != foodTypeCount) {
+    lastFoodPrinted = new int[foodTypeCount];
     for (int i = 0; i < lastFoodPrinted.length; i++) lastFoodPrinted[i] = -1;
   }
 }
 
 int[] countFoodBySpecies() {
-  int[] counts = new int[CFG.MAX_SPECIES_KEYS];
+  int[] counts = new int[max(1, cfgSpeciesFoodColors.length)];
 
   if (foodPellets != null) {
     for (int i = 0; i < foodPellets.size(); i++) {
@@ -285,8 +282,7 @@ void maybePrintStatsOnChange() {
 
   String msg = "Animales: " + animals;
 
-  int maxSpecies = (assets != null) ? assets.getSpeciesCount() : food.length;
-  int n = min(food.length, maxSpecies);
+  int n = food.length;
 
   for (int s = 0; s < n; s++) {
     msg += ", Comida " + (s + 1) + ": " + food[s];
@@ -1016,9 +1012,7 @@ int getSpeciesColor(int speciesIdx) {
     return cfgSpeciesFoodColors[speciesIdx];
   }
 
-  int denom = CFG.MAX_SPECIES_KEYS;
-  int speciesCount = assets.getSpeciesCount();
-  if (speciesCount > 0) denom = max(1, min(CFG.MAX_SPECIES_KEYS, speciesCount));
+  int denom = max(1, cfgSpeciesFoodColors.length);
 
   pushStyle();
   colorMode(HSB, 360, 100, 100, 255);
@@ -1056,7 +1050,7 @@ int varyFoodColorTone(int baseColor) {
 
 
 float getFoodSpawnXForSpecies(int speciesIdx) {
-  int n = max(1, assets.getSpeciesCount());
+  int n = max(1, cfgSpeciesFoodColors.length);
   float segmentW = width / (float)n;
 
   float x = (speciesIdx + 0.5) * segmentW;
@@ -1068,10 +1062,10 @@ float getFoodSpawnXForSpecies(int speciesIdx) {
 }
 
 void spawnFoodForSpecies(int speciesIdx) {
-  int speciesCount = assets.getSpeciesCount();
-  if (speciesCount <= 0) return;
-  if (speciesIdx < 0 || speciesIdx >= speciesCount) return;
-  if (speciesIdx >= CFG.MAX_SPECIES_KEYS) return;
+  int foodTypeCount = cfgSpeciesFoodColors.length;
+  if (foodTypeCount <= 0) return;
+  if (speciesIdx < 0 || speciesIdx >= foodTypeCount) return;
+  if (!cfgSpeciesFoodColorSet[speciesIdx]) return;
 
   // Límite por especie: si ya hay demasiados, ignorar el spawn
   int current = countPelletsForSpecies(speciesIdx);
@@ -1084,7 +1078,7 @@ void spawnFoodForSpecies(int speciesIdx) {
 
   int c = getSpeciesColor(speciesIdx);
 
-  int n = max(1, speciesCount);
+  int n = max(1, foodTypeCount);
   float segmentW = width / (float)n;
 
   float baseX = getFoodSpawnXForSpecies(speciesIdx);
