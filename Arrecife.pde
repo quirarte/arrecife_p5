@@ -209,9 +209,27 @@ void loadRuntimeConfig() {
       }
 
       if (foodId < 0 || foodId >= cfgSpeciesFoodColors.length || !cfgSpeciesFoodColorSet[foodId]) {
+        int fallbackFoodId = -1;
+        if (cfgSpeciesFoodColors.length > 0 && cfgSpeciesFoodColorSet[0]) {
+          fallbackFoodId = 0;
+        } else {
+          for (int k = 0; k < cfgSpeciesFoodColorSet.length; k++) {
+            if (cfgSpeciesFoodColorSet[k]) {
+              fallbackFoodId = k;
+              break;
+            }
+          }
+        }
+
+        if (fallbackFoodId < 0) {
+          println("WARNING: food_index fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
+            + ". No hay comida válida configurada en food_colors. Se ignora perfil.");
+          continue;
+        }
+
         println("WARNING: food_index fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
-          + ". Rango válido: 0.." + (cfgSpeciesFoodColors.length - 1) + ". Se ignora perfil.");
-        continue;
+          + ". Se usará la primera comida disponible food_index=" + fallbackFoodId + ".");
+        foodId = fallbackFoodId;
       }
 
       parsedSpecies[validSpecies][0] = s1;
