@@ -23,27 +23,27 @@
   "species_profiles": [
     {
       "fiducial_id": 1,
-      "food": 5,
       "sound1": "splash.wav",
-      "sound2": "hai-hai.mp3"
+      "sound2": "hai-hai.mp3",
+      "food_index": 4
     },
     {
       "fiducial_id": 2,
-      "food": 1,
       "sound1": "splash.wav",
-      "sound2": "yahoo.wav"
+      "sound2": "yahoo.wav",
+      "food_index": 0
     },
     {
       "fiducial_id": 3,
-      "food": 2,
       "sound1": "splash.wav",
-      "sound2": "caballito.mp3"
+      "sound2": "caballito.mp3",
+      "food_index": 1
     },
     {
       "fiducial_id": 4,
-      "food": 3,
       "sound1": "splash.wav",
-      "sound2": "shark.mp3"
+      "sound2": "shark.mp3",
+      "food_index": 2
     }
   ],
   "idle_led_count": 2

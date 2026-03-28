@@ -196,9 +196,20 @@ void loadRuntimeConfig() {
         continue;
       }
 
-      int foodId = o.getInt("food", -1);
+      int foodId = -1;
+      if (!o.isNull("food_index")) {
+        foodId = o.getInt("food_index", -1);
+      } else if (!o.isNull("food")) {
+        int legacyFoodNumber = o.getInt("food", -1);
+        // Compatibilidad legacy: "food" histórico era base-1.
+        foodId = legacyFoodNumber - 1;
+        println("WARNING: species_profiles[" + i + "] usa 'food' (legacy base-1). "
+          + "Migra a 'food_index' base-0. Valor recibido=" + legacyFoodNumber
+          + " -> food_index=" + foodId);
+      }
+
       if (foodId < 0 || foodId >= cfgSpeciesFoodColors.length || !cfgSpeciesFoodColorSet[foodId]) {
-        println("WARNING: food fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
+        println("WARNING: food_index fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
           + ". Rango válido: 0.." + (cfgSpeciesFoodColors.length - 1) + ". Se ignora perfil.");
         continue;
       }
