@@ -40,12 +40,6 @@
       "food": "food_color_4",
       "sound1": "splash.wav",
       "sound2": "shark.mp3"
-    },
-    {
-      "fiducial_id": 10,
-      "food": "food_color_5",
-      "sound1": "splash.wav",
-      "sound2": "shark.mp3"
     }
   ],
   "idle_led_count": 2
