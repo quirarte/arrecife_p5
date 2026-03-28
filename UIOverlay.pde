@@ -146,12 +146,17 @@ class UIOverlay {
       p.rect(rx, ry, rw, rh);
     }
 
+    String cornerLabel = "TL";
+    if (markerPlacement == 2) cornerLabel = "TR";
+    else if (markerPlacement == 3) cornerLabel = "BR";
+    else if (markerPlacement == 4) cornerLabel = "BL";
+
     p.fill(255);
     p.textSize(14);
     p.textAlign(LEFT, TOP);
     p.text("ROI anclado a fiducial: flechas cambian tamaño (LEFT/RIGHT=X, UP/DOWN=Y)", x, y + h + 6);
-    p.text("1..4 marcador hoja TL/TR/BR/BL=" + markerPlacement + " extents=(" + extentX + "," + extentY + ")", x, y + h + 24);
-    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr + " | J,K thr | O sale", x, y + h + 42);
+    p.text("1..4 esquina de hoja | Seleccionada: " + markerPlacement + " (" + cornerLabel + ")", x, y + h + 24);
+    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr + " extents=(" + extentX + "," + extentY + ") | J,K thr | O sale", x, y + h + 42);
   }
 
   void drawHelpMenu(int speciesCount) {
