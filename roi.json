@@ -1,7 +1,6 @@
 {
-  "w": 380,
-  "whiteThr": 197,
-  "x": 140,
-  "h": 244,
-  "y": 160
+  "markerPlacement": 1,
+  "extentX": 380,
+  "extentY": 244,
+  "whiteThr": 197
 }
