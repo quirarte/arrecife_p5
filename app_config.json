@@ -9,9 +9,7 @@
     "#CC0000",
     "#00CC00",
     "#CCCC00",
-    "#CC00CC",
-    "#0099CC",
-    "#FF8800"
+    "#0099CC"    
   ],
   "food_color_tone_range": 0.35,
   "fondo_files": [
@@ -25,7 +23,7 @@
       "fiducial_id": 1,
       "sound1": "splash.wav",
       "sound2": "hai-hai.mp3",
-      "food_index": 4
+      "food_index": 2
     },
     {
       "fiducial_id": 2,
