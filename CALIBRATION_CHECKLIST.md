@@ -1,13 +1,14 @@
-# Checklist de calibración ROI/blob
+# Checklist de calibracion ROI/blob
 
-1. Abrir el sketch y verificar que la cámara activa sea la correcta (`P` para preview webcam).
+1. Abrir el sketch y verificar que la camara activa sea la correcta (`P` para preview webcam).
 2. Activar modo ROI con `O`.
-3. Mover ROI con flechas para cubrir solo el área útil (sin bordes de mesa/pared).
+3. Mover ROI con flechas para cubrir solo el area util (sin bordes de mesa/pared).
 4. Redimensionar ROI con `Shift + flechas` hasta ajustar el encuadre.
 5. Ajustar `whiteThr` con `,` y `.`:
    - Si se recortan zonas claras del objeto, subir umbral.
    - Si entra demasiado fondo claro, bajar umbral.
-6. Probar una captura (`ESPACIO`) y validar resultado visual del pez generado.
-7. Guardar calibración con `S` (genera/actualiza `roi.json`).
-8. Salir de modo ROI con `O`.
-9. Registrar fecha/hora y condiciones de luz del montaje para repetibilidad.
+6. Ajustar la luz fija de la matriz con `J` y `K` hasta obtener una imagen estable.
+7. Probar una captura (`ESPACIO`) y validar resultado visual del pez generado.
+8. Guardar calibracion con `S` (genera/actualiza `roi.json`).
+9. Salir de modo ROI con `O`.
+10. Registrar fecha/hora y condiciones de luz del montaje para repetibilidad.

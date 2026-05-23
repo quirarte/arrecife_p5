@@ -492,7 +492,9 @@ void setup() {
   blobber.roiExtentX = CFG.ROI_W_DEFAULT;
   blobber.roiExtentY = CFG.ROI_H_DEFAULT;
   blobber.whiteThr = CFG.BLOB_WHITE_THR_DEFAULT;
+  blobber.setMatrixLedCount(cfgIdleLedCount);
   blobber.loadROI();
+  syncMatrixLedCountToArduino();
   
   // 9) Fiduciales BoofCV
   if (CFG.FIDUCIAL_ENABLED) {
@@ -511,8 +513,17 @@ void setup() {
 
 void sendFlashConfigToArduino() {
   if (!arduinoDisponible || arduino == null) return;
-  arduino.write("F:" + cfgFlashLedCount + "," + cfgFlashDurationMs + "\n");
-  arduino.write("I:" + cfgIdleLedCount + "\n");
+  if (blobber != null) {
+    arduino.write("I:" + blobber.getMatrixLedCount() + "\n");
+  } else {
+    arduino.write("I:" + cfgIdleLedCount + "\n");
+  }
+}
+
+void syncMatrixLedCountToArduino() {
+  if (blobber == null) return;
+  if (!arduinoDisponible || arduino == null) return;
+  arduino.write("I:" + blobber.getMatrixLedCount() + "\n");
 }
 
 void draw() {
@@ -578,7 +589,8 @@ void draw() {
     uiOverlay.drawRoiPreviewAndOverlay(10, 40, CFG.PREVIEW_W, CFG.PREVIEW_H,
       camBuffer, camHasFrame,
       blobber.getRoiX(), blobber.getRoiY(), blobber.getRoiW(), blobber.getRoiH(), blobber.getRoiQuad(),
-      roiStep, blobber.whiteThr, blobber.getMarkerPlacement(), blobber.getExtentX(), blobber.getExtentY());
+      roiStep, blobber.whiteThr, blobber.getMarkerPlacement(), blobber.getExtentX(), blobber.getExtentY(),
+      blobber.getMatrixLedCount());
   }
 
   // Post (fiducial + applySpeciesProfile + sonidos + spawn)
@@ -737,18 +749,30 @@ boolean handleUiKeys() {
     return true; 
   }
   
-    // Ajuste de paso
-    if (key == '[') { roiStep = max(1, roiStep - 1); return true; }
-    if (key == ']') { roiStep = min(40, roiStep + 1); return true; }
-
     // Ajuste thresholds
     if (key == ',') { blobber.whiteThr = max(0, blobber.whiteThr - 1); return true; }
     if (key == '.') { blobber.whiteThr = min(255, blobber.whiteThr + 1); return true; }
 
+    // Ajuste de LEDs siempre encendidos en la matriz
+    if (key == 'j' || key == 'J') {
+      blobber.nudgeMatrixLedCount(-1);
+      syncMatrixLedCountToArduino();
+      return true;
+    }
+    if (key == 'k' || key == 'K') {
+      blobber.nudgeMatrixLedCount(+1);
+      syncMatrixLedCountToArduino();
+      return true;
+    }
+
 
     // Guardar / cargar
     if (key == 's' || key == 'S') { blobber.saveROI(); return true; }
-    if (key == 'l' || key == 'L') { blobber.loadROI(); return true; }
+    if (key == 'l' || key == 'L') {
+      blobber.loadROI();
+      syncMatrixLedCountToArduino();
+      return true;
+    }
     if (key == '1') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_TOP_LEFT); return true; }
     if (key == '2') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_TOP_RIGHT); return true; }
     if (key == '3') { blobber.setMarkerPlacement(BlobSegmenter.MARKER_BOTTOM_RIGHT); return true; }

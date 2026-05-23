@@ -10,6 +10,8 @@ class BlobSegmenter {
   static final int MARKER_TOP_RIGHT = 2;
   static final int MARKER_BOTTOM_RIGHT = 3;
   static final int MARKER_BOTTOM_LEFT = 4;
+  static final int MATRIX_LED_COUNT_MIN = 1;
+  static final int MATRIX_LED_COUNT_MAX = 64;
 
   // ROI aproximada en coords del buffer (AABB de la ROI rotada)
   int roiX, roiY, roiW, roiH;
@@ -23,6 +25,7 @@ class BlobSegmenter {
   // Umbral para considerar "blanco"
   // Foreground si maxRGB < whiteThr
   int whiteThr = 225;
+  int matrixLedCount = 2;
 
   // Buffers reutilizables
   int[] binary;   // 0 o 1, tamaño W*H
@@ -92,6 +95,14 @@ class BlobSegmenter {
   void nudgeExtent(int dx, int dy) {
     roiExtentX = max(10, min(W, roiExtentX + dx));
     roiExtentY = max(10, min(H, roiExtentY + dy));
+  }
+
+  void setMatrixLedCount(int count) {
+    matrixLedCount = constrain(count, MATRIX_LED_COUNT_MIN, MATRIX_LED_COUNT_MAX);
+  }
+
+  void nudgeMatrixLedCount(int delta) {
+    setMatrixLedCount(matrixLedCount + delta);
   }
 
   void rebuildFallbackQuadFromAabb() {
@@ -196,10 +207,12 @@ class BlobSegmenter {
       roiExtentX = loadedExtentX;
       roiExtentY = loadedExtentY;
       whiteThr = j.getInt("whiteThr", whiteThr);
+      setMatrixLedCount(j.getInt("matrixLedCount", matrixLedCount));
       roiExtentX = max(10, min(W, roiExtentX));
       roiExtentY = max(10, min(H, roiExtentY));
       println("ROI cargado desde roi.json: markerPlacement=" + markerPlacement
-        + " extentX=" + roiExtentX + " extentY=" + roiExtentY + " whiteThr=" + whiteThr);
+        + " extentX=" + roiExtentX + " extentY=" + roiExtentY + " whiteThr=" + whiteThr
+        + " matrixLedCount=" + matrixLedCount);
       rebuildFallbackQuadFromAabb();
       return true;
     } catch (Exception e) {
@@ -215,6 +228,7 @@ class BlobSegmenter {
       j.setInt("extentX", roiExtentX);
       j.setInt("extentY", roiExtentY);
       j.setInt("whiteThr", whiteThr);
+      j.setInt("matrixLedCount", matrixLedCount);
       p.saveJSONObject(j, roiPath());
       println("ROI guardado en roi.json");
       return true;
@@ -384,5 +398,6 @@ class BlobSegmenter {
   int getExtentX() { return roiExtentX; }
   int getExtentY() { return roiExtentY; }
   int getMarkerPlacement() { return markerPlacement; }
+  int getMatrixLedCount() { return matrixLedCount; }
   float[] getRoiQuad() { return roiQuad; }
 }

@@ -13,7 +13,7 @@
 #define NUM_LEDS_2         64
 
 // Botones arcade sin foco, usando INPUT_PULLUP (presionado = LOW)
-#define PIN_BOTON_CAPTURA  2   // D2  -> secuencia completa
+#define PIN_BOTON_CAPTURA  2   // D2  -> manda captura y dispara animación
 #define PIN_BOTON_Z        3   // D3  -> manda 'z'
 #define PIN_BOTON_X        4   // D4  -> manda 'x'
 #define PIN_BOTON_V        5   // D5  -> manda 'v'
@@ -35,7 +35,7 @@ struct DebounceBtn {
 };
 
 DebounceBtn btns[] = {
-  { PIN_BOTON_CAPTURA, HIGH, HIGH, 0, 'S' }, // CAPTURA (no se manda directo, inicia secuencia)
+  { PIN_BOTON_CAPTURA, HIGH, HIGH, 0, 'S' }, // CAPTURA
   { PIN_BOTON_Z,       HIGH, HIGH, 0, 'z' }, // FOOD Z
   { PIN_BOTON_X,       HIGH, HIGH, 0, 'x' }, // FOOD X
   { PIN_BOTON_V,       HIGH, HIGH, 0, 'v' }  // FOOD V
@@ -43,29 +43,6 @@ DebounceBtn btns[] = {
 
 const int BTN_COUNT = (int)(sizeof(btns) / sizeof(btns[0]));
 
-// =========================
-// Secuencia de captura (no bloqueante)
-// D2 presionado:
-// 1) Matriz 2 (pin 11): encender centro en blanco
-// 2) esperar 250ms
-// 3) mandar 'S' a Processing (para que haga captura)
-// 4) esperar 200ms
-// 5) Matriz 2: apagar
-// 6) animación "viaje" en tira (pin 12)
-// =========================
-enum CaptureState {
-  CAP_IDLE = 0,
-  CAP_WAIT_BEFORE_S,
-  CAP_WAIT_AFTER_S,
-  CAP_ANIM
-};
-
-CaptureState capState = CAP_IDLE;
-unsigned long capT0 = 0;
-bool sentS = false;
-
-int flashLedCount = 16;
-unsigned long flashDurationMs = 1000;
 int idleLedCount = 2;
 String serialLine = "";
 
@@ -150,15 +127,12 @@ void loop() {
   // 3) Si llegó trigger de animación sola (comando '1'), ejecútala si no está en curso
   if (triggerAnimOnly) {
     triggerAnimOnly = false;
-    if (!animRunning && capState == CAP_IDLE) {
+    if (!animRunning) {
       startAnim();
     }
   }
 
-  // 4) Actualizar secuencia de captura (no bloqueante)
-  updateCaptureSequence();
-
-  // 5) Actualizar animación (no bloqueante)
+  // 4) Actualizar animación (no bloqueante)
   updateAnim();
 }
 
@@ -180,51 +154,13 @@ void readButtonAndAct(DebounceBtn &b) {
       // Evento al presionar (LOW por INPUT_PULLUP)
       if (b.stableState == LOW) {
         if (b.pin == PIN_BOTON_CAPTURA) {
-          // Inicia secuencia si está libre
-          if (capState == CAP_IDLE && !animRunning) {
-            matriz2FlashOn(flashLedCount);
-            capState = CAP_WAIT_BEFORE_S;
-            capT0 = millis();
-            sentS = false;
-          }
+          Serial.write('S');
+          if (!animRunning) startAnim();
         } else {
           // Botones comida: manda el caracter a Processing
           Serial.write(b.onPressChar);
         }
       }
-    }
-  }
-}
-
-// =========================
-// Secuencia de captura no bloqueante
-// =========================
-void updateCaptureSequence() {
-  unsigned long now = millis();
-
-  if (capState == CAP_WAIT_BEFORE_S) {
-    if (!sentS && (now - capT0 >= flashDurationMs)) {
-      Serial.write('S');   // Processing captura
-      sentS = true;
-      capState = CAP_WAIT_AFTER_S;
-      capT0 = now;
-    }
-  }
-  else if (capState == CAP_WAIT_AFTER_S) {
-    if (now - capT0 >= 200) {
-      // Regresa ambos NeoPixel al patrón idle
-      updateIdleLeds();
-
-      // Arranca animación en tira (pin 12)
-      startAnim();
-
-      capState = CAP_ANIM;
-    }
-  }
-  else if (capState == CAP_ANIM) {
-    // Termina cuando acabe la animación
-    if (!animRunning) {
-      capState = CAP_IDLE;
     }
   }
 }
@@ -282,21 +218,6 @@ void paintMatrixCorners(int ledCount, uint32_t color) {
   }
 }
 
-void matriz2FlashOn(int ledCount) {
-  pixels2.clear();
-
-  uint32_t idleColor = pixels2.Color(255, 255, 255);
-  uint32_t flashColor = pixels2.Color(255, 255, 255);
-
-  // Base idle siempre encendida
-  paintMatrixCorners(idleLedCount, idleColor);
-
-  // Flash encima del patrón idle
-  paintMatrixCorners(ledCount, flashColor);
-
-  pixels2.show();
-}
-
 void updateIdleMatrix() {
   pixels2.clear();
 
@@ -327,26 +248,11 @@ void parseSerialLine(String line) {
     return;
   }
 
-  if (line.startsWith("F:")) {
-    int sep = line.indexOf(',');
-    if (sep < 0) return;
-
-    String ledsRaw = line.substring(2, sep);
-    String durRaw = line.substring(sep + 1);
-
-    int leds = ledsRaw.toInt();
-    long duration = durRaw.toInt();
-
-    if (leds >= 1 && leds <= NUM_LEDS_2) flashLedCount = leds;
-    if (duration >= 1) flashDurationMs = (unsigned long)duration;
-    return;
-  }
-
   if (line.startsWith("I:")) {
     int leds = line.substring(2).toInt();
     if (leds >= 1 && leds <= NUM_LEDS_2) {
       idleLedCount = leds;
-      if (capState == CAP_IDLE && !animRunning) updateIdleLeds();
+      updateIdleMatrix();
     }
   }
 }

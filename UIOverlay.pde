@@ -50,7 +50,7 @@ class UIOverlay {
       p.fill(255, 200);
       p.textSize(14);
       p.textAlign(LEFT, TOP);
-      p.text("Webcam sin señal", x + 10, y + 10);
+      p.text("Webcam sin senal", x + 10, y + 10);
     }
 
     p.noFill();
@@ -104,7 +104,7 @@ class UIOverlay {
   void drawRoiPreviewAndOverlay(int x, int y, int w, int h,
       PGraphics camBuffer, boolean camHasFrame,
       int roiX, int roiY, int roiW, int roiH, float[] roiQuad,
-      int roiStep, int whiteThr, int markerPlacement, int extentX, int extentY) {
+      int roiStep, int whiteThr, int markerPlacement, int extentX, int extentY, int matrixLedCount) {
     if (camBuffer == null) return;
 
     p.noStroke();
@@ -146,17 +146,12 @@ class UIOverlay {
       p.rect(rx, ry, rw, rh);
     }
 
-    String cornerLabel = "TL";
-    if (markerPlacement == 2) cornerLabel = "TR";
-    else if (markerPlacement == 3) cornerLabel = "BR";
-    else if (markerPlacement == 4) cornerLabel = "BL";
-
     p.fill(255);
     p.textSize(14);
     p.textAlign(LEFT, TOP);
-    p.text("ROI anclado a fiducial: flechas cambian tamaño (LEFT/RIGHT=X, UP/DOWN=Y)", x, y + h + 6);
-    p.text("1..4 esquina de hoja | Seleccionada: " + markerPlacement + " (" + cornerLabel + ")", x, y + h + 24);
-    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr + " extents=(" + extentX + "," + extentY + ") | , . thr | O sale", x, y + h + 42);
+    p.text("Flechas=Tamano | 1-4 = Esquina de Codigo", x, y + h + 6);
+    p.text(", . = Thr (" + whiteThr + ") | k,j = Leds (" + matrixLedCount + ")", x, y + h + 24);
+    p.text("S = Save | L = Load |  O = Salir", x, y + h + 42);
   }
 
   void drawHelpMenu(int speciesCount) {
@@ -168,9 +163,9 @@ class UIOverlay {
       "Flechas + Enter = Seleccionar cuadro",
       "O,o = Calibrar ROI (blob)",
       "C,c = Clear de pantalla",
-      "U,u = Elimina el último pez agregado",
-      " -  = Reduce tamaño",
-      " +  = Incrementa tamaño",
+      "U,u = Elimina el ultimo pez agregado",
+      " -  = Reduce tamano",
+      " +  = Incrementa tamano",
       "1.." + speciesCount + " = Cambia especie y sonidos",
       "F1..F9 = Cambia webcam (con preview activo)",
       "F1..F9 = Cambia fondo (con preview activo)",
@@ -207,6 +202,6 @@ class UIOverlay {
 
     p.textSize(12);
     p.fill(255, 180);
-    p.text("H,h = Este menú", x + padX, y + boxH - 16);
+    p.text("H,h = Este menu", x + padX, y + boxH - 16);
   }
 }

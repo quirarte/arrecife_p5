@@ -1,6 +1,7 @@
 {
+  "matrixLedCount": 8,
   "extentY": 224,
-  "extentX": 404,
+  "extentX": 400,
   "markerPlacement": 2,
-  "whiteThr": 99
+  "whiteThr": 130
 }
