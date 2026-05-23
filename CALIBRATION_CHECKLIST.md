@@ -4,7 +4,7 @@
 2. Activar modo ROI con `O`.
 3. Mover ROI con flechas para cubrir solo el área útil (sin bordes de mesa/pared).
 4. Redimensionar ROI con `Shift + flechas` hasta ajustar el encuadre.
-5. Ajustar `whiteThr` con `J/U`:
+5. Ajustar `whiteThr` con `,` y `.`:
    - Si se recortan zonas claras del objeto, subir umbral.
    - Si entra demasiado fondo claro, bajar umbral.
 6. Probar una captura (`ESPACIO`) y validar resultado visual del pez generado.

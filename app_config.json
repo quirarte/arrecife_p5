@@ -3,7 +3,7 @@
   "arduino_baud": 9600,
   "default_cam_index": 1,
   "espera_post_ms": 1600,
-  "flash_led_count": 2,
+  "flash_led_count": 6,
   "flash_duration_ms": 1000,
   "food_colors": [
     "#CC0000",

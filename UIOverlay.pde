@@ -156,7 +156,7 @@ class UIOverlay {
     p.textAlign(LEFT, TOP);
     p.text("ROI anclado a fiducial: flechas cambian tamaño (LEFT/RIGHT=X, UP/DOWN=Y)", x, y + h + 6);
     p.text("1..4 esquina de hoja | Seleccionada: " + markerPlacement + " (" + cornerLabel + ")", x, y + h + 24);
-    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr + " extents=(" + extentX + "," + extentY + ") | J,K thr | O sale", x, y + h + 42);
+    p.text("S guarda, L carga, [, ] paso=" + roiStep + " whiteThr=" + whiteThr + " extents=(" + extentX + "," + extentY + ") | , . thr | O sale", x, y + h + 42);
   }
 
   void drawHelpMenu(int speciesCount) {

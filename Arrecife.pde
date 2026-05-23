@@ -742,8 +742,8 @@ boolean handleUiKeys() {
     if (key == ']') { roiStep = min(40, roiStep + 1); return true; }
 
     // Ajuste thresholds
-    if (key == 'j' || key == 'J') { blobber.whiteThr = max(0, blobber.whiteThr - 1); return true; }
-    if (key == 'k' || key == 'K') { blobber.whiteThr = min(255, blobber.whiteThr + 1); return true; }
+    if (key == ',') { blobber.whiteThr = max(0, blobber.whiteThr - 1); return true; }
+    if (key == '.') { blobber.whiteThr = min(255, blobber.whiteThr + 1); return true; }
 
 
     // Guardar / cargar
