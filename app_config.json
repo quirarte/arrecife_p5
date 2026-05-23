@@ -1,5 +1,5 @@
 {
-  "arduino_com": "COM9",
+  "arduino_com": "COM15",
   "arduino_baud": 9600,
   "default_cam_index": 1,
   "espera_post_ms": 1600,
@@ -23,19 +23,19 @@
       "fiducial_id": 1,
       "sound1": "splash.wav",
       "sound2": "hai-hai.mp3",
-      "food_index": 2
+      "food_index": 0
     },
     {
       "fiducial_id": 2,
       "sound1": "splash.wav",
       "sound2": "yahoo.wav",
-      "food_index": 0
+      "food_index": 1
     },
     {
       "fiducial_id": 3,
       "sound1": "splash.wav",
       "sound2": "caballito.mp3",
-      "food_index": 1
+      "food_index": 2
     },
     {
       "fiducial_id": 4,
