@@ -24,7 +24,6 @@ class Config {
 
   // Teclas comida
   final char[] FOOD_KEYS = { 'z', 'x', 'v', 'b', 'n' };
-  final int MAX_SPECIES_KEYS = 5;
 
   // Spawn comida
   final int FOOD_COUNT_MIN = 25;
@@ -69,38 +68,15 @@ class Config {
   final float WANDER_D = 30;
   final float WANDER_CHANGE = 0.25;
 
-  final int SHARK_SPECIES_INDEX = 3;
-
-  final float SHARK_CRUISE_SPEED_MULT = 1.15;
-  final float SHARK_CRUISE_FORCE_MULT = 0.95;
-  final float SHARK_FOOD_SPEED_MULT = 2.2;
-  final float SHARK_FOOD_FORCE_MULT = 1.2;
-  final float SHARK_PATROL_LANE_Y = 0.38;
-  final float SHARK_PATROL_BAND_HEIGHT = 0.22;
-  final float SHARK_PATROL_REACH_RADIUS = 90;
-  final int SHARK_PATROL_MIN_FRAMES = 45;
-  final int SHARK_PATROL_MAX_FRAMES = 110;
-  final float SHARK_PATROL_FORWARD_MIN = 0.82;
-  final float SHARK_PATROL_SIDE_MARGIN = 0.08;
-  final float SHARK_TURN_TRIGGER_MARGIN = 0.10;
-  final float SHARK_TURN_FRAMES = 28;
-  final float SHARK_TURN_GLIDE_SPEED_MULT = 0.72;
-  final float SHARK_TURN_GLIDE_DAMPING = 0.94;
-  final float SHARK_PATROL_MAX_PITCH_DEG = 18;
-  final float SHARK_FOOD_VERTICAL_WEIGHT = 0.4;
-  final float SHARK_FOOD_HEADING_WEIGHT = 0.6;
-  final float SHARK_BITE_RADIUS_MULT = 1.35;
-
   // FishBody
   final int MOUTH_ALPHA_THR = 10;
   
-    // ROI defaults para segmentación blob (se sobreescriben desde roi.json si existe)
-  final int ROI_X_DEFAULT = 128;
-  final int ROI_Y_DEFAULT = 72;
+  // ROI defaults para segmentación blob (se sobreescriben desde roi.json si existe)
   final int ROI_W_DEFAULT = 384;
   final int ROI_H_DEFAULT = 336;
 
   final int BLOB_WHITE_THR_DEFAULT = 225;
+
   // =========================
   // Fiduciales BoofCV (Square Binary)
   // =========================

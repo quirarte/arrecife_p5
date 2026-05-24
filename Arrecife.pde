@@ -10,261 +10,6 @@ boolean arduinoBootSyncPending = false;
 int arduinoBootSyncAtMs = 0;
 final int ARDUINO_BOOT_SYNC_DELAY_MS = 2200;
 
-String cfgArduinoCom;
-int cfgArduinoBaud;
-int cfgDefaultCamIndex;
-int cfgEsperaPostMs;
-int cfgFlashLedCount;
-int cfgFlashDurationMs;
-int cfgIdleLedCount;
-int[] cfgSpeciesFoodColors;
-boolean[] cfgSpeciesFoodColorSet;
-float cfgFoodColorToneRange;
-String[] cfgFondoFiles;
-String[][] cfgSpeciesSoundPairs;
-int[] cfgSpeciesFiducialIds;
-int[] cfgSpeciesFoodIds;
-
-String normalizeHexColor(String raw) {
-  if (raw == null) return "";
-
-  String s = trim(raw);
-  if (s.length() == 0) return "";
-
-  if (s.startsWith("#")) s = s.substring(1);
-  if (s.startsWith("0x") || s.startsWith("0X")) s = s.substring(2);
-
-  return s;
-}
-
-boolean isValidHexColor(String raw) {
-  String s = normalizeHexColor(raw);
-
-  if (s.length() != 6 && s.length() != 8) return false;
-
-  for (int i = 0; i < s.length(); i++) {
-    char ch = s.charAt(i);
-    boolean isDigit = (ch >= '0' && ch <= '9');
-    boolean isLowerHex = (ch >= 'a' && ch <= 'f');
-    boolean isUpperHex = (ch >= 'A' && ch <= 'F');
-    if (!isDigit && !isLowerHex && !isUpperHex) return false;
-  }
-
-  return true;
-}
-
-int parseHexColor(String raw) {
-  String s = normalizeHexColor(raw);
-
-  if (s.length() == 6) {
-    return (0xFF << 24) | unhex(s);
-  }
-
-  if (s.length() == 8) {
-    return unhex(s);
-  }
-
-  return 0;
-}
-
-void loadRuntimeConfig() {
-  cfgArduinoCom = "";
-  cfgArduinoBaud = 9600;
-  cfgDefaultCamIndex = 0;
-  cfgEsperaPostMs = 1600;
-  cfgFlashLedCount = 16;
-  cfgFlashDurationMs = 1000;
-  // Fallback: solo se usa si app_config.json no trae idle_led_count
-  // (normalmente lo cambias únicamente en el JSON).
-  cfgIdleLedCount = cfgFlashLedCount;
-  cfgFoodColorToneRange = 0.20;
-  cfgSpeciesFoodColors = new int[0];
-  cfgSpeciesFoodColorSet = new boolean[0];
-
-  cfgFondoFiles = new String[0];
-  cfgSpeciesSoundPairs = new String[0][2];
-  cfgSpeciesFiducialIds = new int[0];
-  cfgSpeciesFoodIds = new int[0];
-
-  JSONObject runtimeCfg = loadJSONObject("app_config.json");
-  if (runtimeCfg == null) {
-    println("app_config.json no existe, usando configuración mínima por defecto");
-    return;
-  }
-
-  cfgArduinoCom = runtimeCfg.getString("arduino_com", cfgArduinoCom);
-  cfgArduinoBaud = runtimeCfg.getInt("arduino_baud", cfgArduinoBaud);
-  cfgDefaultCamIndex = runtimeCfg.getInt("default_cam_index", cfgDefaultCamIndex);
-  cfgEsperaPostMs = runtimeCfg.getInt("espera_post_ms", cfgEsperaPostMs);
-  cfgFlashLedCount = runtimeCfg.getInt("flash_led_count", cfgFlashLedCount);
-  cfgFlashDurationMs = runtimeCfg.getInt("flash_duration_ms", cfgFlashDurationMs);
-  cfgIdleLedCount = runtimeCfg.getInt("idle_led_count", cfgIdleLedCount);
-  cfgFlashLedCount = constrain(cfgFlashLedCount, 1, 64);
-  cfgFlashDurationMs = max(1, cfgFlashDurationMs);
-  cfgIdleLedCount = constrain(cfgIdleLedCount, 1, 64);
-  cfgFoodColorToneRange = runtimeCfg.getFloat("food_color_tone_range", cfgFoodColorToneRange);
-  cfgFoodColorToneRange = constrain(cfgFoodColorToneRange, 0.0, 1.0);
-
-  JSONArray foodColors = runtimeCfg.getJSONArray("food_colors");
-  if (foodColors == null || foodColors.size() == 0) {
-    println("ERROR: app_config.json requiere 'food_colors' como array no vacío.");
-    return;
-  }
-
-  cfgSpeciesFoodColors = new int[foodColors.size()];
-  cfgSpeciesFoodColorSet = new boolean[foodColors.size()];
-  int validFoodColors = 0;
-
-  for (int i = 0; i < foodColors.size(); i++) {
-    String colorRaw = foodColors.getString(i, "");
-    if (colorRaw == null || trim(colorRaw).length() == 0) {
-      println("WARNING: food_colors[" + i + "] vacío. Se ignora.");
-      continue;
-    }
-
-    if (isValidHexColor(colorRaw)) {
-      cfgSpeciesFoodColors[i] = parseHexColor(colorRaw);
-      cfgSpeciesFoodColorSet[i] = true;
-      validFoodColors++;
-    } else {
-      println("WARNING: formato inválido para food_colors[" + i + "]='" + colorRaw + "'. Usa #RRGGBB o #AARRGGBB");
-    }
-  }
-
-  if (validFoodColors == 0) {
-    println("ERROR: no hay colores válidos en 'food_colors'.");
-    return;
-  }
-
-
-  JSONArray fondoFiles = runtimeCfg.getJSONArray("fondo_files");
-  if (fondoFiles != null && fondoFiles.size() > 0) {
-    String[] parsedFondos = new String[fondoFiles.size()];
-    int validFondos = 0;
-    for (int i = 0; i < fondoFiles.size(); i++) {
-      String raw = fondoFiles.getString(i, "");
-      if (raw == null || trim(raw).length() == 0) continue;
-      parsedFondos[validFondos++] = trim(raw);
-    }
-    if (validFondos > 0) {
-      cfgFondoFiles = new String[validFondos];
-      for (int i = 0; i < validFondos; i++) cfgFondoFiles[i] = parsedFondos[i];
-    }
-  }
-
-  JSONArray speciesProfiles = runtimeCfg.getJSONArray("species_profiles");
-  if (speciesProfiles != null && speciesProfiles.size() > 0) {
-    String[][] parsedSpecies = new String[speciesProfiles.size()][2];
-    int[] parsedFiducials = new int[speciesProfiles.size()];
-    int[] parsedFoods = new int[speciesProfiles.size()];
-    int validSpecies = 0;
-
-    for (int i = 0; i < speciesProfiles.size(); i++) {
-      JSONObject o = speciesProfiles.getJSONObject(i);
-      if (o == null) continue;
-
-      String s1 = o.getString("sound1", "");
-      String s2 = o.getString("sound2", "");
-      if (s1 == null || s2 == null) continue;
-      s1 = trim(s1);
-      s2 = trim(s2);
-      if (s1.length() == 0 || s2.length() == 0) continue;
-
-      int defaultFiducialId = i + 1;
-      int fiducialId = o.getInt("fiducial_id", defaultFiducialId);
-      boolean hasUpperFiducialLimit = (CFG.FIDUCIAL_ID_MAX >= CFG.FIDUCIAL_ID_MIN);
-      boolean fiducialOutOfRange = (fiducialId < CFG.FIDUCIAL_ID_MIN)
-        || (hasUpperFiducialLimit && fiducialId > CFG.FIDUCIAL_ID_MAX);
-      if (fiducialOutOfRange) {
-        String fidRangeMsg = hasUpperFiducialLimit
-          ? (CFG.FIDUCIAL_ID_MIN + ".." + CFG.FIDUCIAL_ID_MAX)
-          : ("mínimo " + CFG.FIDUCIAL_ID_MIN);
-        println("WARNING: fiducial_id fuera de rango para species_profiles[" + i + "]: " + fiducialId
-          + ". Rango válido: " + fidRangeMsg + ". Se ignora perfil.");
-        continue;
-      }
-
-      boolean duplicateFiducial = false;
-      for (int j = 0; j < validSpecies; j++) {
-        if (parsedFiducials[j] == fiducialId) {
-          duplicateFiducial = true;
-          break;
-        }
-      }
-      if (duplicateFiducial) {
-        println("WARNING: fiducial_id duplicado en species_profiles[" + i + "]: " + fiducialId + ". Se ignora perfil duplicado.");
-        continue;
-      }
-
-      int foodId = -1;
-      if (!o.isNull("food_index")) {
-        foodId = o.getInt("food_index", -1);
-      } else if (!o.isNull("food")) {
-        int legacyFoodNumber = o.getInt("food", -1);
-        // Compatibilidad legacy: "food" histórico era base-1.
-        foodId = legacyFoodNumber - 1;
-        println("WARNING: species_profiles[" + i + "] usa 'food' (legacy base-1). "
-          + "Migra a 'food_index' base-0. Valor recibido=" + legacyFoodNumber
-          + " -> food_index=" + foodId);
-      }
-
-      if (foodId < 0 || foodId >= cfgSpeciesFoodColors.length || !cfgSpeciesFoodColorSet[foodId]) {
-        int fallbackFoodId = -1;
-        if (cfgSpeciesFoodColors.length > 0 && cfgSpeciesFoodColorSet[0]) {
-          fallbackFoodId = 0;
-        } else {
-          for (int k = 0; k < cfgSpeciesFoodColorSet.length; k++) {
-            if (cfgSpeciesFoodColorSet[k]) {
-              fallbackFoodId = k;
-              break;
-            }
-          }
-        }
-
-        if (fallbackFoodId < 0) {
-          println("WARNING: food_index fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
-            + ". No hay comida válida configurada en food_colors. Se ignora perfil.");
-          continue;
-        }
-
-        println("WARNING: food_index fuera de rango o sin color válido en species_profiles[" + i + "]: " + foodId
-          + ". Se usará la primera comida disponible food_index=" + fallbackFoodId + ".");
-        foodId = fallbackFoodId;
-      }
-
-      parsedSpecies[validSpecies][0] = s1;
-      parsedSpecies[validSpecies][1] = s2;
-      parsedFiducials[validSpecies] = fiducialId;
-      parsedFoods[validSpecies] = foodId;
-      validSpecies++;
-    }
-
-    if (validSpecies > 0) {
-      cfgSpeciesSoundPairs = new String[validSpecies][2];
-      cfgSpeciesFiducialIds = new int[validSpecies];
-      cfgSpeciesFoodIds = new int[validSpecies];
-      for (int i = 0; i < validSpecies; i++) {
-        cfgSpeciesSoundPairs[i][0] = parsedSpecies[i][0];
-        cfgSpeciesSoundPairs[i][1] = parsedSpecies[i][1];
-        cfgSpeciesFiducialIds[i] = parsedFiducials[i];
-        cfgSpeciesFoodIds[i] = parsedFoods[i];
-      }
-    }
-  }
-
-  println("Config runtime: arduino_com=" + cfgArduinoCom
-    + " arduino_baud=" + cfgArduinoBaud
-    + " default_cam_index=" + cfgDefaultCamIndex
-    + " espera_post_ms=" + cfgEsperaPostMs
-    + " flash_led_count=" + cfgFlashLedCount
-    + " flash_duration_ms=" + cfgFlashDurationMs
-    + " idle_led_count=" + cfgIdleLedCount
-    + " food_color_tone_range=" + nf(cfgFoodColorToneRange, 1, 3)
-    + " food_colors=" + cfgSpeciesFoodColors.length
-    + " species_profiles=" + ((cfgSpeciesSoundPairs == null) ? 0 : cfgSpeciesSoundPairs.length)
-    + " fondo_files=" + ((cfgFondoFiles == null) ? 0 : cfgFondoFiles.length));
-}
-
 void initStatsIfNeeded() {
   int foodTypeCount = max(1, cfgSpeciesFoodColors.length);
   if (lastFoodPrinted == null || lastFoodPrinted.length != foodTypeCount) {
@@ -429,10 +174,10 @@ void setup() {
 
   loadRuntimeConfig();
 
-  // 1) AssetsManager con tamaño base del buffer
-  assets = new AssetsManager(this, CFG.CAM_BUFFER_W, CFG.CAM_BUFFER_H);
+  // 1) AssetsManager
+  assets = new AssetsManager(this);
   assets.setFondoFiles(cfgFondoFiles);
-  assets.setSpeciesProfiles(cfgSpeciesSoundPairs, cfgSpeciesFiducialIds);
+  assets.setSpeciesProfiles(cfgSpeciesProfiles);
   uiOverlay = new UIOverlay(this);
 
   // 2) Fondo inicial
@@ -463,7 +208,7 @@ void setup() {
 
     arduino.clear();
     arduino.buffer(1);
-    sendFlashConfigToArduino();
+    syncMatrixLedCountToArduino();
     // Al abrir el puerto serial, muchos Arduino se reinician y pueden perder
     // esta primera configuración. Se programa un reenvío tras el bootloader.
     arduinoBootSyncPending = true;
@@ -476,7 +221,7 @@ void setup() {
   }
 
   // 5) Cámara buffer
-  camBuffer = createGraphics(assets.getCamBufferW(), assets.getCamBufferH(), P2D);
+  camBuffer = createGraphics(CFG.CAM_BUFFER_W, CFG.CAM_BUFFER_H, P2D);
   camBuffer.beginDraw();
   camBuffer.background(0);
   camBuffer.endDraw();
@@ -492,7 +237,6 @@ void setup() {
   blobber.roiExtentX = CFG.ROI_W_DEFAULT;
   blobber.roiExtentY = CFG.ROI_H_DEFAULT;
   blobber.whiteThr = CFG.BLOB_WHITE_THR_DEFAULT;
-  blobber.setMatrixLedCount(cfgIdleLedCount);
   blobber.loadROI();
   syncMatrixLedCountToArduino();
   
@@ -511,24 +255,18 @@ void setup() {
 
 }
 
-void sendFlashConfigToArduino() {
+void syncMatrixLedCountToArduino() {
   if (!arduinoDisponible || arduino == null) return;
   if (blobber != null) {
     arduino.write("I:" + blobber.getMatrixLedCount() + "\n");
   } else {
-    arduino.write("I:" + cfgIdleLedCount + "\n");
+    arduino.write("I:" + BlobSegmenter.MATRIX_LED_COUNT_DEFAULT + "\n");
   }
-}
-
-void syncMatrixLedCountToArduino() {
-  if (blobber == null) return;
-  if (!arduinoDisponible || arduino == null) return;
-  arduino.write("I:" + blobber.getMatrixLedCount() + "\n");
 }
 
 void draw() {
   if (arduinoBootSyncPending && millis() >= arduinoBootSyncAtMs) {
-    sendFlashConfigToArduino();
+    syncMatrixLedCountToArduino();
     arduinoBootSyncPending = false;
     println("Reenvío de config LED al Arduino tras reinicio de puerto serial");
   }
@@ -589,18 +327,15 @@ void draw() {
     uiOverlay.drawRoiPreviewAndOverlay(10, 40, CFG.PREVIEW_W, CFG.PREVIEW_H,
       camBuffer, camHasFrame,
       blobber.getRoiX(), blobber.getRoiY(), blobber.getRoiW(), blobber.getRoiH(), blobber.getRoiQuad(),
-      roiStep, blobber.whiteThr, blobber.getMarkerPlacement(), blobber.getExtentX(), blobber.getExtentY(),
-      blobber.getMatrixLedCount());
+      blobber.whiteThr, blobber.getMatrixLedCount());
   }
 
   // Post (fiducial + applySpeciesProfile + sonidos + spawn)
   if (ejecutarPost && millis() >= tiempoDisparoPost) {
     ejecutarPost = false;
 
-// Flujo post: segmentar con snapshot original (ROI estable) y rotar solo el resultado final.
-float rotAfterProfileDeg = 0;
-
-
+    // Flujo post: segmentar con snapshot original y rotar solo el resultado final.
+    float rotAfterProfileDeg = 0;
     boolean accepted = false;
     int markerId = -1;
     float rawDeg = 0;
@@ -620,10 +355,7 @@ float rotAfterProfileDeg = 0;
         if (idx >= 0 && idx < assets.getSpeciesCount()) {
           assets.applySpeciesProfile(idx);
           accepted = true;
-
-// Si el marcador fue válido, guardar ángulo para rotar tras segmentar.
-rotAfterProfileDeg = -snapDeg;
-
+          rotAfterProfileDeg = -snapDeg;
         }
 
         if (CFG.FIDUCIAL_DEBUG_PRINT) {
@@ -882,7 +614,7 @@ void handleActionKeys() {
     if (camBuffer != null) frozenSnap = camBuffer.get();
     else frozenSnap = null;
 
-    if (arduinoDisponible && arduino != null) arduino.write('1');
+    if (arduinoDisponible && arduino != null) arduino.write("1\n");
 
     tiempoDisparoPost = millis() + cfgEsperaPostMs;
     ejecutarPost = true;
@@ -930,25 +662,17 @@ void updateAllBoidsSize() {
 // =========================
 AnimalAgent createAgentForSpecies(int speciesIndex, PImage skin, PVector spawnLocation, float maxSpeed, float maxForce) {
   int foodSpeciesId = speciesIndex;
-  if (cfgSpeciesFoodIds != null && speciesIndex >= 0 && speciesIndex < cfgSpeciesFoodIds.length) {
-    foodSpeciesId = cfgSpeciesFoodIds[speciesIndex];
-  }
+  if (assets != null) foodSpeciesId = assets.getFoodIndexForSpecies(speciesIndex);
 
-  AnimalAgent agent = null;
-  if (speciesIndex == CFG.SHARK_SPECIES_INDEX) {
-    agent = new SharkAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
-  } else {
-    agent = new FishAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
-  }
-
+  AnimalAgent agent = new FishAgent(skin, spawnLocation, maxSpeed, maxForce, speciesIndex);
   agent.setFoodSpeciesId(foodSpeciesId);
   return agent;
 }
 
 void spawnNewFishFromSnapshot(PImage snapshot, float rotAfterProfileDeg) {
 
-  int w = assets.getCamBufferW();
-  int h = assets.getCamBufferH();
+  int w = CFG.CAM_BUFFER_W;
+  int h = CFG.CAM_BUFFER_H;
 
   if (snapshot == null || blobber == null) return;
 
@@ -978,18 +702,14 @@ void spawnNewFishFromSnapshot(PImage snapshot, float rotAfterProfileDeg) {
 
   int speciesIndex = assets.getSpeciesIndex();
 
-  if (speciesIndex == CFG.SHARK_SPECIES_INDEX) {
-    fishImage = flipPImageVerticallyKeepSize(fishImage);
-  }
-
   // Rotación SOLO después de calcular la alpha con ROI estable.
   if (abs(rotAfterProfileDeg) > 0.0001) {
     fishImage = rotatePImageKeepSize(fishImage, rotAfterProfileDeg);
   }
 
 
-  float ms = (speciesIndex == CFG.SHARK_SPECIES_INDEX) ? 1.95 : random(0.8, 1.9);
-  float mf = (speciesIndex == CFG.SHARK_SPECIES_INDEX) ? 0.24 : 0.2;
+  float ms = random(0.8, 1.9);
+  float mf = 0.2;
 
   AnimalAgent b = createAgentForSpecies(
     speciesIndex,
@@ -1022,6 +742,7 @@ void spawnNewFishFromSnapshot(PImage snapshot, float rotAfterProfileDeg) {
 // =========================
 void clearAllFish() {
   tlwanderers.clear();
+  maybePrintStatsOnChange();
 }
 
 void removeLastFish() {
@@ -1188,9 +909,6 @@ void handleArduinoChar(char c) {
 void triggerCaptureFromHardware() {
   if (ejecutarPost) return;
 
-  // Solo pide la captura, NO la hagas aquí.
+  // La captura se toma en draw(), despues de actualizar camBuffer.
   hwCaptureRequested = true;
-
-  // El Arduino ya hace su secuencia de LEDs y manda 'S'
-  // aquí solo coordinamos el post cuando ya tengamos frozenSnap.
 }

@@ -1,107 +1,48 @@
 class AssetsManager {
 
-  // =========================
-  // Config interna
-  // =========================
-  class SpeciesConfig {
-    int fiducialId;
-    String sound1File;
-    String sound2File;
-
-    SpeciesConfig(int fiducialId, String sound1File, String sound2File) {
-      this.fiducialId = fiducialId;
-      this.sound1File = sound1File;
-      this.sound2File = sound2File;
-    }
-  }
-
   final PApplet p;
 
-  // Dimensiones del buffer base (por ejemplo 640x480)
-  final int CAM_BUFFER_W;
-  final int CAM_BUFFER_H;
-
-  // =========================
   // Listas de assets (runtime desde app_config.json)
-  // =========================
-  SpeciesConfig[] speciesProfiles = new SpeciesConfig[0];
-
+  SpeciesProfile[] speciesProfiles = new SpeciesProfile[0];
   String[] fondoFiles = new String[0];
 
-  // =========================
   // Estado actual
-  // =========================
   int speciesIndex = 0;
 
-  // =========================
   // Assets cargados
-  // =========================
   PImage bgFondo = null;
-
   SoundFile sound1 = null;
   SoundFile sound2 = null;
 
-  // =========================
   // Cache background cover
-  // =========================
   int bgCacheCanvasW = -1;
   int bgCacheCanvasH = -1;
   PImage bgCacheImg = null;
   PGraphics bgCoverCache = null;
 
-  // =========================
-  // Constructores
-  // =========================
-
-  AssetsManager(PApplet p, int camW, int camH) {
+  AssetsManager(PApplet p) {
     this.p = p;
-    CAM_BUFFER_W = max(10, camW);
-    CAM_BUFFER_H = max(10, camH);
   }
 
-
-  void setSpeciesProfiles(String[][] soundPairs, int[] fiducialIds) {
-    if (soundPairs == null || soundPairs.length == 0) {
-      speciesProfiles = new SpeciesConfig[0];
+  void setSpeciesProfiles(SpeciesProfile[] profiles) {
+    if (profiles == null || profiles.length == 0) {
+      speciesProfiles = new SpeciesProfile[0];
       speciesIndex = 0;
       sound1 = null;
       sound2 = null;
-      println("No se cargaron perfiles de especie desde configuración runtime");
+      println("No se cargaron perfiles de especie desde configuracion runtime");
       return;
     }
 
-    SpeciesConfig[] loaded = new SpeciesConfig[soundPairs.length];
+    SpeciesProfile[] loaded = new SpeciesProfile[profiles.length];
     int valid = 0;
 
-    for (int i = 0; i < soundPairs.length; i++) {
-      String s1 = null;
-      String s2 = null;
-
-      if (soundPairs[i] != null && soundPairs[i].length > 0) s1 = soundPairs[i][0];
-      if (soundPairs[i] != null && soundPairs[i].length > 1) s2 = soundPairs[i][1];
-
-      if (s1 == null || trim(s1).length() == 0) continue;
-      if (s2 == null || trim(s2).length() == 0) continue;
-
-      int fiducialId = i + 1;
-      if (fiducialIds != null && i < fiducialIds.length) fiducialId = fiducialIds[i];
-
-      boolean duplicateFiducial = false;
-      for (int j = 0; j < valid; j++) {
-        if (loaded[j] != null && loaded[j].fiducialId == fiducialId) {
-          duplicateFiducial = true;
-          break;
-        }
-      }
-      if (duplicateFiducial) {
-        println("WARNING: fiducial_id duplicado en perfil de especie: " + fiducialId + ". Se ignora perfil.");
-        continue;
-      }
-
-      loaded[valid++] = new SpeciesConfig(fiducialId, trim(s1), trim(s2));
+    for (int i = 0; i < profiles.length; i++) {
+      if (profiles[i] == null) continue;
+      loaded[valid++] = profiles[i];
     }
 
-    speciesProfiles = new SpeciesConfig[valid];
+    speciesProfiles = new SpeciesProfile[valid];
     for (int i = 0; i < valid; i++) speciesProfiles[i] = loaded[i];
 
     speciesIndex = 0;
@@ -109,7 +50,7 @@ class AssetsManager {
     else {
       sound1 = null;
       sound2 = null;
-      println("No quedaron perfiles de especie válidos tras parsear configuración runtime");
+      println("No quedaron perfiles de especie validos tras parsear configuracion runtime");
     }
   }
 
@@ -117,7 +58,7 @@ class AssetsManager {
     if (files == null || files.length == 0) {
       fondoFiles = new String[0];
       bgFondo = null;
-      println("No se cargaron fondos desde configuración runtime");
+      println("No se cargaron fondos desde configuracion runtime");
       return;
     }
 
@@ -136,9 +77,6 @@ class AssetsManager {
     bgFondo = null;
   }
 
-  // =========================
-  // Fondos
-  // =========================
   void applyFondo(int idx) {
     if (fondoFiles == null || fondoFiles.length == 0) return;
 
@@ -150,8 +88,6 @@ class AssetsManager {
     }
 
     bgFondo = img;
-
-    // Invalida cache
     bgCacheImg = null;
     bgCoverCache = null;
 
@@ -201,17 +137,13 @@ class AssetsManager {
     bgCacheCanvasH = canvasH;
   }
 
-  // =========================
-  // Perfiles de especie
-  // =========================
   void applySpeciesProfile(int idx) {
     if (speciesProfiles == null || speciesProfiles.length == 0) return;
 
     idx = constrain(idx, 0, speciesProfiles.length - 1);
     speciesIndex = idx;
 
-    SpeciesConfig cfg = speciesProfiles[speciesIndex];
-
+    SpeciesProfile cfg = speciesProfiles[speciesIndex];
     applySounds(cfg.sound1File, cfg.sound2File);
 
     println("Especie activa: #" + (speciesIndex + 1) + " (fiducial_id=" + cfg.fiducialId + ")");
@@ -221,16 +153,19 @@ class AssetsManager {
     if (speciesProfiles == null || speciesProfiles.length == 0) return -1;
 
     for (int i = 0; i < speciesProfiles.length; i++) {
-      SpeciesConfig cfg = speciesProfiles[i];
+      SpeciesProfile cfg = speciesProfiles[i];
       if (cfg == null) continue;
       if (cfg.fiducialId == fiducialId) return i;
     }
     return -1;
   }
 
-  // =========================
-  // Sonidos
-  // =========================
+  int getFoodIndexForSpecies(int idx) {
+    if (speciesProfiles == null || idx < 0 || idx >= speciesProfiles.length) return idx;
+    SpeciesProfile cfg = speciesProfiles[idx];
+    return (cfg == null) ? idx : cfg.foodIndex;
+  }
+
   void applySounds(String s1, String s2) {
     try { if (sound1 != null) sound1.stop(); } catch (Exception e) {}
     try { if (sound2 != null) sound2.stop(); } catch (Exception e) {}
@@ -250,9 +185,6 @@ class AssetsManager {
     println("Sonidos activos: " + s1 + " , " + s2);
   }
 
-  // =========================
-  // Getters
-  // =========================
   int getSpeciesIndex() { return speciesIndex; }
 
   int getSpeciesCount() { return (speciesProfiles == null) ? 0 : speciesProfiles.length; }
@@ -265,7 +197,4 @@ class AssetsManager {
 
   SoundFile getSound2() { return sound2; }
 
-  int getCamBufferW() { return CAM_BUFFER_W; }
-
-  int getCamBufferH() { return CAM_BUFFER_H; }
 }

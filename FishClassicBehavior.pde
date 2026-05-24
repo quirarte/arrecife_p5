@@ -90,21 +90,8 @@ class FishClassicBehavior extends SpeciesBehavior {
   }
 
   FoodPellet pickFoodTarget(AnimalAgent agent, ArrayList<FoodPellet> foods) {
-    if (agent.lockedFood != null && agent.lockedFoodFrames < CFG.LOCK_FRAMES) {
-      boolean stillThere = false;
-      for (int i = 0; i < foods.size(); i++) {
-        if (foods.get(i) == agent.lockedFood) {
-          stillThere = true;
-          break;
-        }
-      }
-      if (stillThere && agent.lockedFood.speciesId == agent.foodSpeciesId) {
-        agent.lockedFoodFrames++;
-        return agent.lockedFood;
-      } else {
-        clearFoodLock(agent);
-      }
-    }
+    FoodPellet locked = keepLockedFoodIfValid(agent, foods, CFG.LOCK_FRAMES);
+    if (locked != null) return locked;
 
     FoodPellet best = null;
     float bestScore = 1e18;
@@ -133,31 +120,4 @@ class FishClassicBehavior extends SpeciesBehavior {
     return best;
   }
 
-  void clearFoodLock(AnimalAgent agent) {
-    agent.lockedFood = null;
-    agent.lockedFoodFrames = 0;
-  }
-
-  void tryEat(AnimalAgent agent, ArrayList<FoodPellet> foods) {
-    if (foods == null || foods.isEmpty()) return;
-
-    agent.getMouthPointLocalStable(agent.tmpMouthStable);
-    float mx = agent.location.x + agent.tmpMouthStable.x;
-    float my = agent.location.y + agent.tmpMouthStable.y;
-
-    float biteR = max(CFG.BITE_R_MIN, min(CFG.BITE_R_MAX, agent.renderH * CFG.BITE_R_SCALE));
-
-    for (int i = foods.size() - 1; i >= 0; i--) {
-      FoodPellet p = foods.get(i);
-      if (p.speciesId != agent.foodSpeciesId) continue;
-
-      float dx = mx - p.pos.x;
-      float dy = my - p.pos.y;
-      float rr = biteR + p.r;
-
-      if (dx*dx + dy*dy <= rr*rr) {
-        foods.remove(i);
-      }
-    }
-  }
 }

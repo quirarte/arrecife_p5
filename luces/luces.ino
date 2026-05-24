@@ -43,7 +43,8 @@ DebounceBtn btns[] = {
 
 const int BTN_COUNT = (int)(sizeof(btns) / sizeof(btns[0]));
 
-int idleLedCount = 2;
+const int MATRIX_LED_COUNT_DEFAULT = 2;
+int matrixLedCount = MATRIX_LED_COUNT_DEFAULT;
 String serialLine = "";
 
 int matrixCornersOrder[NUM_LEDS_2];
@@ -99,7 +100,7 @@ void setup() {
 
   prepareMatrixCornersOrder();
 
-  updateIdleLeds();
+  updateMatrixAndStrip();
 }
 
 void loop() {
@@ -218,24 +219,24 @@ void paintMatrixCorners(int ledCount, uint32_t color) {
   }
 }
 
-void updateIdleMatrix() {
+void updateMatrixLeds() {
   pixels2.clear();
 
-  uint32_t idleColor = pixels2.Color(255, 255, 255);
-  paintMatrixCorners(idleLedCount, idleColor);
+  uint32_t matrixColor = pixels2.Color(255, 255, 255);
+  paintMatrixCorners(matrixLedCount, matrixColor);
 
   pixels2.show();
 }
 
-void updateIdleStrip() {
-  // La tira principal debe permanecer apagada en reposo.
+void clearTravelStrip() {
+  // La tira principal solo se usa para la animacion de recorrido.
   pixels.clear();
   pixels.show();
 }
 
-void updateIdleLeds() {
-  updateIdleMatrix();
-  updateIdleStrip();
+void updateMatrixAndStrip() {
+  updateMatrixLeds();
+  clearTravelStrip();
 }
 
 void parseSerialLine(String line) {
@@ -251,8 +252,8 @@ void parseSerialLine(String line) {
   if (line.startsWith("I:")) {
     int leds = line.substring(2).toInt();
     if (leds >= 1 && leds <= NUM_LEDS_2) {
-      idleLedCount = leds;
-      updateIdleMatrix();
+      matrixLedCount = leds;
+      updateMatrixLeds();
     }
   }
 }
@@ -284,7 +285,7 @@ void updateAnim() {
   // Cuando la cabeza ya salió y la cola también, termina
   if (animHead >= NUM_LEDS + TRAVEL_LEN) {
     animRunning = false;
-    updateIdleStrip();
+    clearTravelStrip();
     return;
   }
 

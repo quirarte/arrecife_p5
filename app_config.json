@@ -2,7 +2,7 @@
   "arduino_com": "COM15",
   "arduino_baud": 9600,
   "default_cam_index": 1,
-  "espera_post_ms": 1600,
+  "espera_post_ms": 1400,
   "food_colors": [
     "#CC0000",
     "#00CC00",
@@ -41,6 +41,5 @@
       "sound2": "shark.mp3",
       "food_index": 2
     }
-  ],
-  "idle_led_count": 2
+  ]
 }

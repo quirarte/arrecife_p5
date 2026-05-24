@@ -12,6 +12,7 @@ class BlobSegmenter {
   static final int MARKER_BOTTOM_LEFT = 4;
   static final int MATRIX_LED_COUNT_MIN = 1;
   static final int MATRIX_LED_COUNT_MAX = 64;
+  static final int MATRIX_LED_COUNT_DEFAULT = 2;
 
   // ROI aproximada en coords del buffer (AABB de la ROI rotada)
   int roiX, roiY, roiW, roiH;
@@ -25,7 +26,7 @@ class BlobSegmenter {
   // Umbral para considerar "blanco"
   // Foreground si maxRGB < whiteThr
   int whiteThr = 225;
-  int matrixLedCount = 2;
+  int matrixLedCount = MATRIX_LED_COUNT_DEFAULT;
 
   // Buffers reutilizables
   int[] binary;   // 0 o 1, tamaño W*H
@@ -395,9 +396,6 @@ class BlobSegmenter {
   int getRoiY() { return roiY; }
   int getRoiW() { return roiW; }
   int getRoiH() { return roiH; }
-  int getExtentX() { return roiExtentX; }
-  int getExtentY() { return roiExtentY; }
-  int getMarkerPlacement() { return markerPlacement; }
   int getMatrixLedCount() { return matrixLedCount; }
   float[] getRoiQuad() { return roiQuad; }
 }

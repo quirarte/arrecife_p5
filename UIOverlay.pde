@@ -104,7 +104,7 @@ class UIOverlay {
   void drawRoiPreviewAndOverlay(int x, int y, int w, int h,
       PGraphics camBuffer, boolean camHasFrame,
       int roiX, int roiY, int roiW, int roiH, float[] roiQuad,
-      int roiStep, int whiteThr, int markerPlacement, int extentX, int extentY, int matrixLedCount) {
+      int whiteThr, int matrixLedCount) {
     if (camBuffer == null) return;
 
     p.noStroke();

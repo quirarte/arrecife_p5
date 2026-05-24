@@ -15,9 +15,9 @@ class FoodPellet {
     this.col = col;
     this.r = radius;
 
-    // NUEVO: forma aleatoria, independiente de la especie
-    int[] SHAPES = { 0, 5, 6, 7 };
-    this.sides = SHAPES[(int)random(SHAPES.length)];
+    // Forma aleatoria, independiente de la especie.
+    int shapeChoice = (int)random(4);
+    this.sides = (shapeChoice == 0) ? 0 : shapeChoice + 4;
   }
 
   void update() {

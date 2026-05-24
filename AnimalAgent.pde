@@ -19,16 +19,6 @@ class AnimalAgent extends FishBody {
   final PVector tmpMouthStable = new PVector();
   FoodPellet lockedFood = null;
   int lockedFoodFrames = 0;
-  boolean mirrorSpriteOnTurn = false;
-  boolean deferMirrorUntilAfterFirstUpdate = false;
-  boolean turningAround = false;
-  float turnProgress = 1;
-  float turnStartHeading = 0;
-  float turnTargetHeading = 0;
-  float turnStartMirrorScale = 1;
-  float turnTargetMirrorScale = 1;
-  float displayMirrorScale = 1;
-  float turnCruiseSpeed = 0;
 
   AnimalAgent(PImage _skin, PVector _location, float _maxSpeed, float _maxForce, int _speciesId) {
     super(_skin);
@@ -47,15 +37,10 @@ class AnimalAgent extends FishBody {
 
     baseMaxForce = maxForce;
     baseMaxSpeed = maxSpeed;
-    displayMirrorScale = (velocity.x < 0) ? -1 : 1;
   }
 
   void setBehavior(SpeciesBehavior nextBehavior) {
     behavior = nextBehavior;
-  }
-
-  SpeciesBehavior getBehavior() {
-    return behavior;
   }
 
   void setSpawnBehavior(SpawnBehavior nextSpawnBehavior) {
@@ -112,8 +97,6 @@ class AnimalAgent extends FishBody {
   }
 
   void update() {
-    updateTurnAround();
-
     velocity.add(acceleration);
     velocity.limit(maxSpeed);
     location.add(velocity);
@@ -125,24 +108,13 @@ class AnimalAgent extends FishBody {
 
     super.move();
 
-    if (deferMirrorUntilAfterFirstUpdate) deferMirrorUntilAfterFirstUpdate = false;
   }
 
   void display() {
-    float th = getDisplayHeading();
-    float mirrorScale = getDisplayMirrorScale();
-    PVector bodyCenter = getBodyCenterLocalForDisplay();
-
     pushMatrix();
     translate(location.x, location.y);
-    translate(bodyCenter.x, bodyCenter.y);
-    rotate(getDisplaySpinAngle());
-    translate(-bodyCenter.x, -bodyCenter.y);
-    scale(mirrorScale, 1);
-
-    super.theta = degrees(th);
+    super.theta = degrees(getDisplayHeading());
     super.display();
-
     popMatrix();
   }
 
@@ -179,93 +151,6 @@ class AnimalAgent extends FishBody {
   }
 
   float getDisplayHeading() {
-    if (turningAround) return lerpAngle(turnStartHeading, turnTargetHeading, turnProgress);
-    if (!mirrorSpriteOnTurn) return velocity.heading();
-
-    float vx = velocity.x;
-    float vy = velocity.y;
-    if (abs(vx) < 0.0001 && abs(vy) < 0.0001) return 0;
-
-    return atan2(vy, abs(vx));
-  }
-
-  boolean shouldMirrorSprite() {
-    return getDisplayMirrorScale() < 0;
-  }
-
-  float getDisplayMirrorScale() {
-    if (!mirrorSpriteOnTurn || deferMirrorUntilAfterFirstUpdate) return 1;
-    if (turningAround) return displayMirrorScale;
-    return (velocity.x < 0) ? -1 : 1;
-  }
-
-  float getDisplaySpinAngle() {
-    if (!turningAround) return 0;
-    return sin(turnProgress * PI) * PI;
-  }
-
-  void beginTurnAround(float nextDirX, float cruiseSpeed) {
-    if (!mirrorSpriteOnTurn || turningAround) return;
-
-    turningAround = true;
-    turnProgress = 0;
-    turnStartHeading = getDisplayHeading();
-    float dirX = (nextDirX >= 0) ? 1 : -1;
-    float targetVy = constrain(velocity.y, -baseMaxSpeed * 0.25, baseMaxSpeed * 0.25);
-    turnTargetHeading = atan2(targetVy, abs(dirX));
-    turnStartMirrorScale = getDisplayMirrorScale();
-    turnTargetMirrorScale = (dirX < 0) ? -1 : 1;
-    displayMirrorScale = turnStartMirrorScale;
-    float targetTurnSpeed = baseMaxSpeed * CFG.SHARK_TURN_GLIDE_SPEED_MULT;
-    turnCruiseSpeed = (cruiseSpeed > 0) ? min(cruiseSpeed, targetTurnSpeed) : targetTurnSpeed;
-    velocity.x = signNonZeroSafe(velocity.x) * turnCruiseSpeed;
-    velocity.y *= CFG.SHARK_TURN_GLIDE_DAMPING;
-    acceleration.set(0, 0);
-  }
-
-  void updateTurnAround() {
-    if (!turningAround) return;
-
-    turnProgress += 1.0 / max(1.0, CFG.SHARK_TURN_FRAMES);
-    if (turnProgress >= 1) {
-      turnProgress = 1;
-      turningAround = false;
-      displayMirrorScale = turnTargetMirrorScale;
-      velocity.x = signNonZeroSafe(turnTargetMirrorScale) * turnCruiseSpeed;
-      velocity.y = constrain(velocity.y, -baseMaxSpeed * 0.25, baseMaxSpeed * 0.25);
-      return;
-    }
-
-    displayMirrorScale = lerp(turnStartMirrorScale, turnTargetMirrorScale, turnProgress);
-    float currentDir = signNonZeroSafe(turnStartMirrorScale);
-    velocity.x = currentDir * turnCruiseSpeed * lerp(1.0, CFG.SHARK_TURN_GLIDE_DAMPING, turnProgress);
-    velocity.y *= CFG.SHARK_TURN_GLIDE_DAMPING;
-  }
-
-  float lerpAngle(float start, float stop, float amt) {
-    float delta = atan2(sin(stop - start), cos(stop - start));
-    return start + delta * amt;
-  }
-
-  float signNonZeroSafe(float value) {
-    return (value >= 0) ? 1 : -1;
-  }
-
-  void getMouthPointLocalStableForDisplay(PVector out) {
-    getMouthPointLocalStable(out);
-    if (shouldMirrorSprite()) out.x *= -1;
-  }
-
-  PVector getBodyCenterLocalForDisplay() {
-    PVector out = new PVector();
-    if (node == null || node.length == 0) return out;
-
-    int tailIndex = max(0, numNodes - 1);
-    out.x = (node[0].x + node[tailIndex].x) * 0.5;
-    out.y = (node[0].y + node[tailIndex].y) * 0.5;
-
-    if (shouldMirrorSprite()) out.x *= -1;
-
-    return out;
+    return velocity.heading();
   }
 }
