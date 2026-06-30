@@ -4,9 +4,12 @@
 // Hardware
 // =========================
 
-// Tira NeoPixel 60 LEDs (nuevo)
+// Tira NeoPixel principal (capacidad maxima reservada en firmware)
 #define PIN_NEOPIXEL       12
-#define NUM_LEDS           60
+#define STRIP_LED_COUNT_DEFAULT 60
+#define STRIP_LED_COUNT_MAX     300
+#define STRIP_TRAVEL_STEP_MS_DEFAULT 24
+#define STRIP_TRAVEL_STEP_MS_MAX     1000
 
 // Matriz NeoPixel 8x8 (segunda)
 #define PIN_NEOPIXEL_2     11
@@ -20,7 +23,7 @@
 
 #define DEBOUNCE_MS        35
 
-Adafruit_NeoPixel pixels(NUM_LEDS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels(STRIP_LED_COUNT_MAX, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixels2(NUM_LEDS_2, PIN_NEOPIXEL_2, NEO_GRB + NEO_KHZ800);
 
 // =========================
@@ -43,6 +46,7 @@ DebounceBtn btns[] = {
 
 const int BTN_COUNT = (int)(sizeof(btns) / sizeof(btns[0]));
 
+int stripLedCount = STRIP_LED_COUNT_DEFAULT;
 const int MATRIX_LED_COUNT_DEFAULT = 2;
 int matrixLedCount = MATRIX_LED_COUNT_DEFAULT;
 String serialLine = "";
@@ -51,14 +55,14 @@ int matrixCornersOrder[NUM_LEDS_2];
 bool matrixCornersOrderReady = false;
 
 // =========================
-// Animación NeoPixel no bloqueante (tira 60 LEDs en PIN_NEOPIXEL)
+// Animación NeoPixel no bloqueante (tira principal en PIN_NEOPIXEL)
 // =========================
 bool animRunning = false;
-int animHead = 0;                // cabeza del segmento (0..NUM_LEDS-1, luego sale)
+int animHead = 0;                // cabeza del segmento (0..stripLedCount-1, luego sale)
 unsigned long animT0 = 0;
 
 // Ajuste rápido de velocidad
-int TRAVEL_STEP_MS = 24;         // baja = más rápido, sube = más lento
+int TRAVEL_STEP_MS = STRIP_TRAVEL_STEP_MS_DEFAULT;  // baja = más rápido, sube = más lento
 
 const int TRAVEL_LEN = 5;        // cantidad de LEDs encendidos
 const uint8_t TRAVEL_R = 0;
@@ -255,13 +259,30 @@ void parseSerialLine(String line) {
       matrixLedCount = leds;
       updateMatrixLeds();
     }
+    return;
+  }
+
+  if (line.startsWith("L:")) {
+    int leds = line.substring(2).toInt();
+    if (leds >= 1 && leds <= STRIP_LED_COUNT_MAX) {
+      stripLedCount = leds;
+      if (!animRunning) clearTravelStrip();
+    }
+    return;
+  }
+
+  if (line.startsWith("T:")) {
+    int stepMs = line.substring(2).toInt();
+    if (stepMs >= 1 && stepMs <= STRIP_TRAVEL_STEP_MS_MAX) {
+      TRAVEL_STEP_MS = stepMs;
+    }
   }
 }
 
 
 // =========================
-// Animación NeoPixel no bloqueante (tira 60 LEDs)
-// Efecto: 5 LEDs encendidos avanzan de 0 a 59
+// Animación NeoPixel no bloqueante (tira principal)
+// Efecto: 5 LEDs encendidos avanzan de 0 al último LED configurado
 // =========================
 void startAnim() {
   animRunning = true;
@@ -283,7 +304,7 @@ void updateAnim() {
   animHead++;
 
   // Cuando la cabeza ya salió y la cola también, termina
-  if (animHead >= NUM_LEDS + TRAVEL_LEN) {
+  if (animHead >= stripLedCount + TRAVEL_LEN) {
     animRunning = false;
     clearTravelStrip();
     return;
@@ -299,7 +320,7 @@ void drawTravelFrame(int head) {
   int end = head;
 
   for (int i = start; i <= end; i++) {
-    if (i < 0 || i >= NUM_LEDS) continue;
+    if (i < 0 || i >= stripLedCount) continue;
 
     // Cola con atenuación simple
     int tailIndex = end - i; // 0 = cabeza, 4 = cola

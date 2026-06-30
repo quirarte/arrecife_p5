@@ -1,21 +1,36 @@
 {
+  "_comment_arduino_com": "Puerto serial donde esta conectado el Arduino que controla botones y LEDs. Ejemplo: COM15.",
   "arduino_com": "COM15",
+  "_comment_arduino_baud": "Velocidad de comunicacion serial con el Arduino. Debe coincidir con Serial.begin(...) del firmware.",
   "arduino_baud": 9600,
+  "_comment_default_cam_index": "Indice de la camara que se abrira al iniciar. Empieza en 0; 1 significa la segunda camara detectada.",
   "default_cam_index": 1,
+  "_comment_strip_led_count": "Cantidad de LEDs activos en la tira lineal principal. Ajusta cuantos LEDs recorre la animacion.",
+  "strip_led_count": 60,
+  "_comment_strip_travel_step_ms": "Tiempo en milisegundos entre cada avance de la animacion de la tira LED. Menor valor = mas rapido.",
+  "strip_travel_step_ms": 24,
+  "_comment_fish_spawn_height": "Altura inicial con la que aparecen los peces en el acuario. El ancho se calcula automaticamente para conservar proporcion.",
+  "fish_spawn_height": 380,
+  "_comment_espera_post_ms": "Tiempo de espera despues de la captura antes de procesar la imagen y generar el pez.",
   "espera_post_ms": 1400,
+  "_comment_food_colors": "Lista de colores disponibles para los tipos de comida. Cada valor debe ser un color hexadecimal como #RRGGBB.",
   "food_colors": [
     "#CC0000",
     "#00CC00",
     "#CCCC00",
     "#0099CC"    
   ],
-  "food_color_tone_range": 0.35,
+  "_comment_food_color_tone_range": "Variacion permitida del tono al generar colores de comida. 0 = sin variacion, 1 = variacion maxima.",
+  "food_color_tone_range": 0.75,
+  "_comment_fondo_files": "Lista de imagenes de fondo que el acuario puede usar. Deben existir en la raiz del proyecto.",
   "fondo_files": [
     "arrecife photo.png",
     "arrecife.png",
     "mar.png",
     "rio.png"
   ],
+  "_comment_species_profiles": "Configuracion por especie/fiducial: cada objeto representa una especie detectada por un marcador.",
+  "_comment_species_profiles_fields": "Campos por objeto: fiducial_id = ID del marcador; sound1 = primer sonido asociado; sound2 = segundo sonido asociado; food_index = indice base-0 dentro de food_colors.",
   "species_profiles": [
     {
       "fiducial_id": 1,

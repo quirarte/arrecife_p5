@@ -14,6 +14,9 @@ AppConfig AppConfig::loadFromFile(const std::string& path) {
 
   fs["default_cam_index"] >> cfg.defaultCameraIndex;
   fs["arduino_baud"] >> cfg.arduinoBaud;
+  fs["strip_led_count"] >> cfg.stripLedCount;
+  fs["strip_travel_step_ms"] >> cfg.stripTravelStepMs;
+  fs["fish_spawn_height"] >> cfg.fishSpawnHeight;
   fs["arduino_com"] >> cfg.arduinoCom;
 
   return cfg;

@@ -1,7 +1,7 @@
 {
-  "matrixLedCount": 12,
-  "extentY": 244,
+  "matrixLedCount": 13,
+  "extentY": 228,
   "extentX": 452,
   "markerPlacement": 2,
-  "whiteThr": 135
+  "whiteThr": 129
 }

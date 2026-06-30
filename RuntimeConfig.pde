@@ -2,11 +2,22 @@ String cfgArduinoCom;
 int cfgArduinoBaud;
 int cfgDefaultCamIndex;
 int cfgEsperaPostMs;
+int cfgStripLedCount;
+int cfgStripTravelStepMs;
+int cfgFishSpawnHeight;
 int[] cfgSpeciesFoodColors;
 boolean[] cfgSpeciesFoodColorSet;
 float cfgFoodColorToneRange;
 String[] cfgFondoFiles;
 SpeciesProfile[] cfgSpeciesProfiles;
+
+final int STRIP_LED_COUNT_MIN = 1;
+final int STRIP_LED_COUNT_DEFAULT = 60;
+final int STRIP_LED_COUNT_MAX = 300;
+final int STRIP_TRAVEL_STEP_MS_MIN = 1;
+final int STRIP_TRAVEL_STEP_MS_DEFAULT = 24;
+final int STRIP_TRAVEL_STEP_MS_MAX = 1000;
+final int FISH_SPAWN_HEIGHT_DEFAULT = 280;
 
 String normalizeHexColor(String raw) {
   if (raw == null) return "";
@@ -55,6 +66,9 @@ void loadRuntimeConfig() {
   cfgArduinoBaud = 9600;
   cfgDefaultCamIndex = 0;
   cfgEsperaPostMs = 1600;
+  cfgStripLedCount = STRIP_LED_COUNT_DEFAULT;
+  cfgStripTravelStepMs = STRIP_TRAVEL_STEP_MS_DEFAULT;
+  cfgFishSpawnHeight = FISH_SPAWN_HEIGHT_DEFAULT;
   cfgFoodColorToneRange = 0.20;
   cfgSpeciesFoodColors = new int[0];
   cfgSpeciesFoodColorSet = new boolean[0];
@@ -71,6 +85,27 @@ void loadRuntimeConfig() {
   cfgArduinoBaud = runtimeCfg.getInt("arduino_baud", cfgArduinoBaud);
   cfgDefaultCamIndex = runtimeCfg.getInt("default_cam_index", cfgDefaultCamIndex);
   cfgEsperaPostMs = runtimeCfg.getInt("espera_post_ms", cfgEsperaPostMs);
+  cfgStripLedCount = runtimeCfg.getInt("strip_led_count", cfgStripLedCount);
+  if (cfgStripLedCount < STRIP_LED_COUNT_MIN || cfgStripLedCount > STRIP_LED_COUNT_MAX) {
+    int rawStripLedCount = cfgStripLedCount;
+    cfgStripLedCount = constrain(cfgStripLedCount, STRIP_LED_COUNT_MIN, STRIP_LED_COUNT_MAX);
+    println("WARNING: strip_led_count fuera de rango (" + rawStripLedCount + "). "
+      + "Se ajusta a " + cfgStripLedCount + " dentro de " + STRIP_LED_COUNT_MIN + ".." + STRIP_LED_COUNT_MAX + ".");
+  }
+  cfgStripTravelStepMs = runtimeCfg.getInt("strip_travel_step_ms", cfgStripTravelStepMs);
+  if (cfgStripTravelStepMs < STRIP_TRAVEL_STEP_MS_MIN || cfgStripTravelStepMs > STRIP_TRAVEL_STEP_MS_MAX) {
+    int rawStripTravelStepMs = cfgStripTravelStepMs;
+    cfgStripTravelStepMs = constrain(cfgStripTravelStepMs, STRIP_TRAVEL_STEP_MS_MIN, STRIP_TRAVEL_STEP_MS_MAX);
+    println("WARNING: strip_travel_step_ms fuera de rango (" + rawStripTravelStepMs + "). "
+      + "Se ajusta a " + cfgStripTravelStepMs + " dentro de " + STRIP_TRAVEL_STEP_MS_MIN + ".." + STRIP_TRAVEL_STEP_MS_MAX + ".");
+  }
+  cfgFishSpawnHeight = runtimeCfg.getInt("fish_spawn_height", cfgFishSpawnHeight);
+  if (cfgFishSpawnHeight < CFG.MIN_FISH_H || cfgFishSpawnHeight > CFG.MAX_FISH_H) {
+    int rawFishSpawnHeight = cfgFishSpawnHeight;
+    cfgFishSpawnHeight = constrain(cfgFishSpawnHeight, CFG.MIN_FISH_H, CFG.MAX_FISH_H);
+    println("WARNING: fish_spawn_height fuera de rango (" + rawFishSpawnHeight + "). "
+      + "Se ajusta a " + cfgFishSpawnHeight + " dentro de " + CFG.MIN_FISH_H + ".." + CFG.MAX_FISH_H + ".");
+  }
   cfgFoodColorToneRange = runtimeCfg.getFloat("food_color_tone_range", cfgFoodColorToneRange);
   cfgFoodColorToneRange = constrain(cfgFoodColorToneRange, 0.0, 1.0);
 
@@ -213,6 +248,9 @@ void loadRuntimeConfig() {
     + " arduino_baud=" + cfgArduinoBaud
     + " default_cam_index=" + cfgDefaultCamIndex
     + " espera_post_ms=" + cfgEsperaPostMs
+    + " strip_led_count=" + cfgStripLedCount
+    + " strip_travel_step_ms=" + cfgStripTravelStepMs
+    + " fish_spawn_height=" + cfgFishSpawnHeight
     + " food_color_tone_range=" + nf(cfgFoodColorToneRange, 1, 3)
     + " food_colors=" + cfgSpeciesFoodColors.length
     + " species_profiles=" + ((cfgSpeciesProfiles == null) ? 0 : cfgSpeciesProfiles.length)

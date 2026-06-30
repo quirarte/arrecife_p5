@@ -208,7 +208,7 @@ void setup() {
 
     arduino.clear();
     arduino.buffer(1);
-    syncMatrixLedCountToArduino();
+    syncLedConfigToArduino();
     // Al abrir el puerto serial, muchos Arduino se reinician y pueden perder
     // esta primera configuración. Se programa un reenvío tras el bootloader.
     arduinoBootSyncPending = true;
@@ -230,6 +230,7 @@ void setup() {
   switchCameraByIndex(selectedCam);
 
   // 6) Render size proporcional
+  fishH = cfgFishSpawnHeight;
   normalizeFishSizeFromH();
 
   // 7) Blobber, cargar ROI desde roi.json si existe
@@ -238,7 +239,7 @@ void setup() {
   blobber.roiExtentY = CFG.ROI_H_DEFAULT;
   blobber.whiteThr = CFG.BLOB_WHITE_THR_DEFAULT;
   blobber.loadROI();
-  syncMatrixLedCountToArduino();
+  syncLedConfigToArduino();
   
   // 9) Fiduciales BoofCV
   if (CFG.FIDUCIAL_ENABLED) {
@@ -255,6 +256,22 @@ void setup() {
 
 }
 
+void syncLedConfigToArduino() {
+  syncStripLedCountToArduino();
+  syncStripTravelStepMsToArduino();
+  syncMatrixLedCountToArduino();
+}
+
+void syncStripLedCountToArduino() {
+  if (!arduinoDisponible || arduino == null) return;
+  arduino.write("L:" + cfgStripLedCount + "\n");
+}
+
+void syncStripTravelStepMsToArduino() {
+  if (!arduinoDisponible || arduino == null) return;
+  arduino.write("T:" + cfgStripTravelStepMs + "\n");
+}
+
 void syncMatrixLedCountToArduino() {
   if (!arduinoDisponible || arduino == null) return;
   if (blobber != null) {
@@ -266,7 +283,7 @@ void syncMatrixLedCountToArduino() {
 
 void draw() {
   if (arduinoBootSyncPending && millis() >= arduinoBootSyncAtMs) {
-    syncMatrixLedCountToArduino();
+    syncLedConfigToArduino();
     arduinoBootSyncPending = false;
     println("Reenvío de config LED al Arduino tras reinicio de puerto serial");
   }
