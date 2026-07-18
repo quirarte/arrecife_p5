@@ -1,6 +1,6 @@
 {
   "_comment_arduino_com": "Puerto serial donde esta conectado el Arduino que controla botones y LEDs. Ejemplo: COM15.",
-  "arduino_com": "COM15",
+  "arduino_com": "COM9",
   "_comment_arduino_baud": "Velocidad de comunicacion serial con el Arduino. Debe coincidir con Serial.begin(...) del firmware.",
   "arduino_baud": 9600,
   "_comment_default_cam_index": "Indice de la camara que se abrira al iniciar. Empieza en 0; 1 significa la segunda camara detectada.",
